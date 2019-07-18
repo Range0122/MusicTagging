@@ -17,8 +17,7 @@ def read_wave(path):
         assert num_channels == 1
         sample_width = wf.getsampwidth()
         assert sample_width == 2
-        # sample_rate = wf.getframerate()
-        sample_rate = 16000
+        sample_rate = wf.getframerate()
         assert sample_rate in (8000, 16000, 32000, 48000)
         pcm_data = wf.readframes(wf.getnframes())
 
@@ -134,70 +133,79 @@ def vad_collector(sample_rate, frame_duration_ms, padding_duration_ms, vad, fram
         yield b''.join([f.bytes for f in voiced_frames])
 
 
-def vad(input_wav, output_wav, mode=1, reverse=False):
+def bytes_reverse(byte_data):
     """
-    input_wav, output_wav分别是wav输入/输出文件的路径，
-    mode={1,2,3}，值越大表示去除的静音部分越多，(mode=0 与 mode=3效果相同)
-    reverse用于选择是否要将wav文件逆序处理，
-    从测试的情况来看，wav文件末尾部分的静音不能完全去除，
-    故添加reverse选项，通过两次调用vad即可去掉首尾的静音，并且保证语音文件仍然是正序
+    将bytes型的数据逆序
+    输出/出均为bytes型
     """
-    waveData, sample_rate = read_wave(input_wav)
-    # waveData, sample_rate = librosa.core.load(input_wav, sr=16000)
-    # waveData = bytes(waveData)
+    int_data = np.fromstring(byte_data, dtype=np.int16)
+    int_data = int_data[::-1]
+    return bytes(int_data)
 
-    if reverse:
-        # 将音频逆序
-        waveData = np.fromstring(waveData, dtype=np.int16)  # 将字符串转化为int
-        waveData = waveData[::-1]
-        waveData = bytes(waveData)
 
+def vad(wave_data, sample_rate, mode=1):
+    """
+    input: wav文件路径
+    output: int型信号向量，以及采样率
+    mode = {1,2,3}，值越大表示去除的静音部分越多，(mode=0 与 mode=3效果相同)
+    vad对bytes型数据进行处理
+    """
+    # vad处理
     vad = webrtcvad.Vad()
     vad.set_mode(mode)
-    frames = frame_generator(30, waveData, sample_rate)
+    frames = frame_generator(30, wave_data, sample_rate)
     frames = list(frames)
     segments = vad_collector(sample_rate, 30, 300, vad, frames)
 
-    # 标记由于vad完全被筛选的语音
-    # 保存原语音文件到结果目录
-    flag = 0
-
+    temp_wav = b""
     for i, segment in enumerate(segments):
-        path = output_wav
-        write_wave(path, segment, sample_rate)
-        flag = 1
+        temp_wav += segment
 
-    if flag == 0:
-        path = output_wav
-        write_wave(path, waveData, sample_rate)
-        print("Backup here")
+    # 判断是否过度静音而去除了所有的音频数据
+    if temp_wav:
+        new_wav = np.frombuffer(temp_wav, dtype=np.int16)
+    else:
+        new_wav = np.fromstring(wave_data, dtype=np.int16)
+        print("Over filtered.")
+
+    return new_wav, sample_rate
+
+
+def vad_detect(input_wav, mode=1, reverse=False):
+    wave_data, sample_rate = read_wave(input_wav)
+    signal, sr = vad(wave_data, sample_rate, mode)
+    if reverse:
+        signal = signal[::-1]
+        signal, sr = vad(bytes(signal), sr, mode)
+        signal = signal[::-1]
+    return signal, sr
+
+
+from Process.picture import waveform
+import matplotlib.pyplot as plt
 
 
 if __name__ == '__main__':
 
-    vad('/Users/range/Code/Data/af2019-srfianl-devset-20190520/data/1d13eeb2febdb5fc41d3aa7db311fa33.wav', 'result.wav', mode=1, reverse=False)
+    path = '/Users/range/Code/Data/af2019-sr-devset-20190312/data/6c6ed1592d3406dfffe9bb2076d3a734.wav'
+    waveform(path)
 
+    signal, sr = vad_detect(path, mode=1, reverse=False)
+    signal = signal * 1.0 / (max(abs(signal)))
+    time = np.arange(0, len(signal)) * (1.0 / sr)
 
-    # # 普通示例
-    # input_wav = ''
-    # output_wav = ''
-    # mode = 1
-    # vad(input_wav, output_wav)
-    #
-    # # 两次调用去掉首尾的静音, 可以两次选用不同的模式
-    # temp_wav = ''
-    # vad(input_wav, temp_wav, 3, True)
-    # vad(temp_wav, output_wav, 3, True)
+    plt.plot(time, signal)
+    plt.xlabel("Time(s)")
+    plt.ylabel("Amplitude")
+    plt.title("Waveform")
+    plt.show()
 
-    # # 示例，批处理wav文件
-    # for root, dirs, files in os.walk('../wav/data'):
-    #     for file in files:
-    #         try:
-    #             input_wav = root + '/' + file
-    #             output_wav = '../wav/vad3/' + file
-    #             vad(input_wav, output_wav, 3, False)
-    #             # temp_wav = '../wav/temp/' + file
-    #             # vad(input_wav, temp_wav, 3, True)
-    #             # vad(temp_wav, output_wav, 2, True)
-    #         except Exception as e:
-    #             print(e)
+    signal, sr = vad_detect(path, mode=1, reverse=True)
+    signal = signal * 1.0 / (max(abs(signal)))  # wave幅值归一化
+    time = np.arange(0, len(signal)) * (1.0 / sr)
+
+    plt.plot(time, signal)
+    plt.xlabel("Time(s)")
+    plt.ylabel("Amplitude")
+    plt.title("Waveform")
+    plt.show()
