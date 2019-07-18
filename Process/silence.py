@@ -35,10 +35,13 @@ class SilenceDetector(object):
         return power
 
 
-def silence(signal, sample_rate):
+def silence(signal, sample_rate, threshold=15):
+    """
+    threshold: control how much silence to remove
+    """
     new_wav = []
 
-    sil_detector = SilenceDetector(15)
+    sil_detector = SilenceDetector(threshold)
     for i in range(int(len(signal)/(sample_rate * 0.02))):
         start = int(i * sample_rate * 0.02)
         end = start + int(sample_rate * 0.02)
