@@ -133,22 +133,12 @@ def vad_collector(sample_rate, frame_duration_ms, padding_duration_ms, vad, fram
         yield b''.join([f.bytes for f in voiced_frames])
 
 
-def bytes_reverse(byte_data):
-    """
-    将bytes型的数据逆序
-    输出/出均为bytes型
-    """
-    int_data = np.fromstring(byte_data, dtype=np.int16)
-    int_data = int_data[::-1]
-    return bytes(int_data)
-
-
 def vad(wave_data, sample_rate, mode=1):
     """
-    input: wav文件路径
-    output: int型信号向量，以及采样率
-    mode = {1,2,3}，值越大表示去除的静音部分越多，(mode=0 与 mode=3效果相同)
-    vad对bytes型数据进行处理
+    input: wav file path
+    output: (int)signal, sample rate
+    mode = {1,2,3}，remove more silence when the value of mode gets larger.
+    vad is dealing with data in BYTES.
     """
     # vad处理
     vad = webrtcvad.Vad()
@@ -172,6 +162,14 @@ def vad(wave_data, sample_rate, mode=1):
 
 
 def vad_detect(input_wav, mode=1, reverse=False):
+    """
+    input: wav file path
+    output: (int)signal, sample rate
+    mode = {1,2,3}，remove more silence when the value of mode gets larger.
+    reverse: according to the experiment, the vad can only remove the silence in the beginning of the wav.
+    through reverse the signal to remove both the silence in the beginning and end of wav.
+    """
+
     wave_data, sample_rate = read_wave(input_wav)
     signal, sr = vad(wave_data, sample_rate, mode)
     if reverse:
@@ -181,31 +179,6 @@ def vad_detect(input_wav, mode=1, reverse=False):
     return signal, sr
 
 
-from Process.picture import waveform
-import matplotlib.pyplot as plt
-
-
 if __name__ == '__main__':
-
     path = '/Users/range/Code/Data/af2019-sr-devset-20190312/data/6c6ed1592d3406dfffe9bb2076d3a734.wav'
-    waveform(path)
-
-    signal, sr = vad_detect(path, mode=1, reverse=False)
-    signal = signal * 1.0 / (max(abs(signal)))
-    time = np.arange(0, len(signal)) * (1.0 / sr)
-
-    plt.plot(time, signal)
-    plt.xlabel("Time(s)")
-    plt.ylabel("Amplitude")
-    plt.title("Waveform")
-    plt.show()
-
     signal, sr = vad_detect(path, mode=1, reverse=True)
-    signal = signal * 1.0 / (max(abs(signal)))  # wave幅值归一化
-    time = np.arange(0, len(signal)) * (1.0 / sr)
-
-    plt.plot(time, signal)
-    plt.xlabel("Time(s)")
-    plt.ylabel("Amplitude")
-    plt.title("Waveform")
-    plt.show()
