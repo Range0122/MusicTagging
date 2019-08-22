@@ -4,7 +4,7 @@ from keras.layers import Conv2D, TimeDistributed, GRU, Dense, Dropout, Flatten
 import config as c
 
 
-def GRU(input_shape):
+def Basic_GRU(input_shape, output_class):
     x_in = Input(input_shape, name='input')
     x = Conv2D(64, (3, 3), strides=(1, 1), padding='same', name='conv1')(x_in)
     x = BatchNormalization(name='bn1')(x)
@@ -18,7 +18,10 @@ def GRU(input_shape):
     x = GRU(512,  return_sequences=False,  name='gru4')(x)
     x = Dropout(c.DROPOUT,  name='gru_drop')(x)
 
-    x = Dense(512, activation='relu', name='fc1')(x)
+    x = Dense(512, name='fc1')(x)
     x = BatchNormalization(name='fc_norm')(x)
     x = Activation('relu',  name='fc_relu')(x)
+
+    x = Dense(output_class, activation='sigmoid', name='fc2')(x)
+
     return Model(inputs=[x_in], outputs=[x], name='GRU')

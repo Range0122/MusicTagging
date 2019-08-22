@@ -175,7 +175,8 @@ def vad(input_wav, output_wav, mode=1, reverse=False):
 
 if __name__ == '__main__':
 
-    vad('/Users/range/Code/Data/af2019-srfianl-devset-20190520/data/1d13eeb2febdb5fc41d3aa7db311fa33.wav', 'result.wav', mode=1, reverse=False)
+    vad('/Users/range/Code/Data/af2019-srfianl-devset-20190520/data/1d13eeb2febdb5fc41d3aa7db311fa33.wav', 'result.wav',
+        mode=1, reverse=False)
 
 
     # # 普通示例
