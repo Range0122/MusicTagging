@@ -18,8 +18,8 @@ def compute_melgram(audio_path):
 
     # mel-spectrogram parameters
     # 后面改成适合自己用的
-    # SR = 12000
-    SR = 22050
+    SR = 12000
+    # SR = 22050
     N_FFT = 512
     N_MELS = 96
     HOP_LEN = 256
@@ -138,7 +138,7 @@ def progress(percent, width=50):
 
 
 if __name__ == '__main__':
-    generate_raw_waveform()
+    generate_spectrogram()
 
     # test_path = '/home/range/Data/GTZAN/data/blues/blues.00000.au'
     # test_path = '/home/range/Data/GTZAN/data/blues/blues.00001.au'

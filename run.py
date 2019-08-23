@@ -10,7 +10,7 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
-config.gpu_options.per_process_gpu_memory_fraction = 0.9
+config.gpu_options.per_process_gpu_memory_fraction = 0.95
 sess = tf.Session(config=config)
 
 
@@ -30,6 +30,11 @@ def main(args):
     input_shape = x_train[0].shape
     output_class = 10
 
+    debug = False
+    # debug = True
+    if debug:
+        print(input_shape)
+        exit()
     # print(y_train)
     # exit()
 
@@ -39,11 +44,11 @@ def main(args):
     model.compile(loss='sparse_categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
     if args.target == 'train':
-        history = model.fit(x_train, y_train, batch_size=64, epochs=50, validation_data=(x_val, y_val), verbose=1,
+        history = model.fit(x_train, y_train, batch_size=64, epochs=150, validation_data=(x_val, y_val), verbose=1,
                             callbacks=[ModelCheckpoint(f'check_point/{model.name}_best.h5', monitor='val_loss',
                                                        save_best_only=True, mode='min'),
                                        ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, mode='min'),
-                                       EarlyStopping(monitor='val_loss', patience=10)]
+                                       EarlyStopping(monitor='val_loss', patience=100)]
                             )
 
         # plt.plot(history.history['loss'], label='train')
