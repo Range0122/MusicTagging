@@ -21,28 +21,24 @@ def get_arguments():
 
 
 def main(args):
-    path = '/home/range/Data/MusicFeature/GTZAN/'
+    path = '/home/range/Data/MusicFeature/GTZAN/spectrogram/'
 
     x_train, y_train = generate_data(path + 'train')
     x_val, y_val = generate_data(path + 'val')
     x_test, y_test = generate_data(path + 'test')
 
     input_shape = x_train[0].shape
-    output_class = 1
+    output_class = 10
 
-    debug = False
-    if debug:
-        print(y_train)
-        print(input_shape)
-        print(output_class)
-        exit()
+    # print(y_train)
+    # exit()
 
     # model = Basic_GRU(input_shape, output_class)
     model = Basic_CNN(input_shape, output_class)
     model.summary()
+    model.compile(loss='sparse_categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
     if args.target == 'train':
-        model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
         history = model.fit(x_train, y_train, batch_size=64, epochs=50, validation_data=(x_val, y_val), verbose=1,
                             callbacks=[ModelCheckpoint(f'check_point/{model.name}_best.h5', monitor='val_loss',
                                                        save_best_only=True, mode='min'),

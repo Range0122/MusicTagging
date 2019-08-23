@@ -58,16 +58,18 @@ def generate_data(path):
         file_list = [root + '/' + file for file in files]
         for file in file_list:
             label = file.split('/')[-1].split('.')[0]
+            feature = np.load(file)
 
-            x.append(np.load(file))
+            x.append(feature)
             y.append(labels.index(label))
 
     return np.array(x), np.array(y)
+    # return x, y
 
 
-def generate_feature(root_path = '/home/range/Data/GTZAN/data/'):
+def generate_spectrogram(root_path='/home/range/Data/GTZAN/data/'):
     """
-    generate from GTZAN dataset
+    generate spectrogram from GTZAN dataset
     """
 
     labels = ['hiphop', 'disco', 'country', 'classical', 'blues', 'reggae', 'rock', 'jazz', 'metal', 'pop']
@@ -86,7 +88,38 @@ def generate_feature(root_path = '/home/range/Data/GTZAN/data/'):
         i = 0
         for path in data[item]:
             feature = compute_melgram(path)
-            npy_path = f"/home/range/Data/MusicFeature/GTZAN/{item}/{path.split('/')[-1][:-3]}"
+            npy_path = f"/home/range/Data/MusicFeature/GTZAN/spectrogram/{item}/{path.split('/')[-1][:-3]}"
+            np.save(npy_path, feature)
+
+            i += 1
+            percent = i/len(data[item])
+            progress(percent, width=30)
+
+
+def generate_raw_waveform(root_path='/home/range/Data/GTZAN/data/'):
+    """
+    generate raw waveform from GTZAN dataset
+    """
+    labels = ['hiphop', 'disco', 'country', 'classical', 'blues', 'reggae', 'rock', 'jazz', 'metal', 'pop']
+
+    data = {'train': [], 'val': [], 'test': []}
+
+    for label in labels:
+        path = root_path + label
+        for root, dirs, files in os.walk(path):
+            file_list = [root + '/' + file for file in files]
+            data['train'] += file_list[:70]
+            data['val'] += file_list[70:80]
+            data['test'] += file_list[80:]
+
+    for item in data.keys():
+        i = 0
+        for path in data[item]:
+            signal, sr = librosa.load(path, sr=None)
+            feature = signal[np.newaxis, :]
+            print(feature.shape)
+            exit()
+            npy_path = f"/home/range/Data/MusicFeature/GTZAN/raw_waveform/{item}/{path.split('/')[-1][:-3]}"
             np.save(npy_path, feature)
 
             i += 1
@@ -105,7 +138,7 @@ def progress(percent, width=50):
 
 
 if __name__ == '__main__':
-    generate_feature()
+    generate_raw_waveform()
 
     # test_path = '/home/range/Data/GTZAN/data/blues/blues.00000.au'
     # test_path = '/home/range/Data/GTZAN/data/blues/blues.00001.au'

@@ -48,30 +48,34 @@ def get_file(trackid, handle, key, secret):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Download 7digital previews for a list of songs.')
-    parser.add_argument(
-        '--key',
-        help='7digital key, optional',
-        nargs='?',
-        default=os.environ.get('DIGITAL7_KEY'),
-    )
-    parser.add_argument(
-        '--secret',
-        help='7digital secret, optional',
-        nargs='?',
-        default=os.environ.get('DIGITAL7_SECRET'),
-    )
-
-    args = parser.parse_args()
-    with open("songlist.txt", "r") as songlist:
-        songs = songlist.read().splitlines()
-        for song in songs:
-            song = song.split('>')[-1]
-            # print(song)
-            # exit()
-            trackid = search_trackid(song, key=args.key, secret=args.secret)
-            title = song.replace(" ", "_").lower()
-            outfile = 'data/mp3/%s.mp3' % title
-            with open(outfile, 'wb') as f:
-                get_file(trackid, f, key=args.key, secret=args.secret)
-                print(outfile)
+    # parser = argparse.ArgumentParser(description='Download 7digital previews for a list of songs.')
+    # parser.add_argument(
+    #     '--key',
+    #     help='7digital key, optional',
+    #     nargs='?',
+    #     default=os.environ.get('DIGITAL7_KEY'),
+    # )
+    # parser.add_argument(
+    #     '--secret',
+    #     help='7digital secret, optional',
+    #     nargs='?',
+    #     default=os.environ.get('DIGITAL7_SECRET'),
+    # )
+    #
+    # args = parser.parse_args()
+    # with open("songlist.txt", "r") as songlist:
+    #     songs = songlist.read().splitlines()
+    #     for song in songs:
+    #         song = song.split('>')[-1]
+    #         # print(song)
+    #         # exit()
+    #         trackid = search_trackid(song, key=args.key, secret=args.secret)
+    #         title = song.replace(" ", "_").lower()
+    #         outfile = 'data/mp3/%s.mp3' % title
+    #         with open(outfile, 'wb') as f:
+    #             get_file(trackid, f, key=args.key, secret=args.secret)
+    #             print(outfile)
+    import numpy as np
+    test = np.load('/home/range/Data/MusicFeature/GTZAN/raw_waveform/train/blues.00007.npy')
+    print(test)
+    print(test.shape)
