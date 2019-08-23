@@ -19,8 +19,6 @@ def search_trackid(search, key, secret):
 
     try:
         r = requests.get(url, auth=auth, params=params, headers=headers)
-        print(r)
-        exit()
         data = r.json()
     except ValueError:
         print(r.content)
