@@ -35,11 +35,10 @@ def main(args):
     if debug:
         print(input_shape)
         exit()
-    # print(y_train)
-    # exit()
 
-    # model = Basic_GRU(input_shape, output_class)
-    model = Basic_CNN(input_shape, output_class)
+    print(input_shape)
+    model = Basic_GRU(input_shape, output_class)
+    # model = Basic_CNN(input_shape, output_class)
     model.summary()
     model.compile(loss='sparse_categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 

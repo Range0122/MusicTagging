@@ -1,81 +1,16 @@
-import os
-import argparse
-import requests
-from requests_oauthlib import OAuth1
+import librosa
+import numpy as np
 
+# path = '/home/range/Data/GTZAN/data/blues/blues.00000.au'
+# y, sr = librosa.load(path, sr=None, duration=29.12)
+# spectrogram = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=512, hop_length=256)
+# logam = librosa.amplitude_to_db(spectrogram ** 2, ref=1.0)
 
-def search_trackid(search, key, secret):
-    url = 'https://api.7digital.com/1.2/track/search'
-    auth = OAuth1(key, secret, signature_type='query')
+path1 = '/home/range/Data/MusicFeature/GTZAN/spectrogram/train/blues.00019.npy'
+feature1 = np.load(path1)
 
-    params = {
-        'q': search,
-        'country': 'ww',
-    }
+path2 = '/home/range/Data/MusicFeature/GTZAN/mine_spectrogram/train/blues.00019.npy'
+feature2 = np.load(path2)
 
-    headers = {
-        'accept': 'application/json',
-    }
+print(feature1.shape, feature2.shape)
 
-    try:
-        r = requests.get(url, auth=auth, params=params, headers=headers)
-        data = r.json()
-    except ValueError:
-        print(r.content)
-        raise
-
-    if data['status'] != 'ok':
-        return None
-
-    return data['searchResults']['searchResult'][0]['track']['id']
-
-
-def get_file(trackid, handle, key, secret):
-    url = "http://previews.7digital.com/clip/%s" % trackid
-    auth = OAuth1(key, secret, signature_type='query')
-
-    params = {
-        'country': 'ww',
-    }
-
-    r = requests.get(url, auth=auth, params=params, stream=True)
-
-    if not r.ok:
-        raise RuntimeError("Download of %s failed" % trackid)
-
-    for block in r.iter_content(1024):
-        handle.write(block)
-
-
-if __name__ == '__main__':
-    # parser = argparse.ArgumentParser(description='Download 7digital previews for a list of songs.')
-    # parser.add_argument(
-    #     '--key',
-    #     help='7digital key, optional',
-    #     nargs='?',
-    #     default=os.environ.get('DIGITAL7_KEY'),
-    # )
-    # parser.add_argument(
-    #     '--secret',
-    #     help='7digital secret, optional',
-    #     nargs='?',
-    #     default=os.environ.get('DIGITAL7_SECRET'),
-    # )
-    #
-    # args = parser.parse_args()
-    # with open("songlist.txt", "r") as songlist:
-    #     songs = songlist.read().splitlines()
-    #     for song in songs:
-    #         song = song.split('>')[-1]
-    #         # print(song)
-    #         # exit()
-    #         trackid = search_trackid(song, key=args.key, secret=args.secret)
-    #         title = song.replace(" ", "_").lower()
-    #         outfile = 'data/mp3/%s.mp3' % title
-    #         with open(outfile, 'wb') as f:
-    #             get_file(trackid, f, key=args.key, secret=args.secret)
-    #             print(outfile)
-    import numpy as np
-    test = np.load('/home/range/Data/MusicFeature/GTZAN/raw_waveform/train/blues.00007.npy')
-    print(test)
-    print(test.shape)

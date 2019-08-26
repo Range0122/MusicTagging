@@ -5,6 +5,16 @@ import os
 import sys
 
 
+def compute_fbank(path):
+    y, sr = librosa.load(path, sr=None)
+
+
+def compute_melspectrogram(path):
+    y, sr = librosa.load(path, sr=None, duration=29.11)
+    spectrogram = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=512)
+    return spectrogram[np.newaxis, :]
+
+
 def compute_melgram(audio_path):
     """
     Compute a mel-spectrogram and returns it in a shape of (1,1,96,1366), where
@@ -33,7 +43,7 @@ def compute_melgram(audio_path):
         # 太短填充0
         src = np.hstack((src, np.zeros((int(DURA * SR) - n_sample,))))
     elif n_sample > n_sample_fit:
-        # 太长从末尾开始取
+        # 太长取最中间长度为n_sample_fit的部分
         start = math.floor((n_sample - n_sample_fit) / 2)
         end = math.floor((n_sample + n_sample_fit) / 2)
         # src = src[(n_sample - n_sample_fit) / 2:(n_sample + n_sample_fit) / 2]
@@ -43,6 +53,7 @@ def compute_melgram(audio_path):
     logam = librosa.amplitude_to_db(melgram ** 2, ref=1.0)
 
     ret = logam[np.newaxis, :]
+    # ret = melgram[np.newaxis, :]
 
     return ret
 
@@ -58,11 +69,15 @@ def generate_data(path):
         file_list = [root + '/' + file for file in files]
         for file in file_list:
             label = file.split('/')[-1].split('.')[0]
+            label = labels.index(label)
             feature = np.load(file)
 
+            # x.append(feature[np.newaxis, :])
             x.append(feature)
-            y.append(labels.index(label))
-
+            y.append(label)
+            # from keras.utils import to_categorical
+            # y.append(to_categorical(label, 10, 'int'))
+            print("x[0]!!!!!!!!!!!!!!!!!!", feature.shape)
     return np.array(x), np.array(y)
     # return x, y
 
@@ -88,6 +103,7 @@ def generate_spectrogram(root_path='/home/range/Data/GTZAN/data/'):
         i = 0
         for path in data[item]:
             feature = compute_melgram(path)
+            # feature = compute_melspectrogram(path)
             npy_path = f"/home/range/Data/MusicFeature/GTZAN/spectrogram/{item}/{path.split('/')[-1][:-3]}"
             np.save(npy_path, feature)
 
@@ -140,5 +156,13 @@ def progress(percent, width=50):
 if __name__ == '__main__':
     generate_spectrogram()
 
-    # test_path = '/home/range/Data/GTZAN/data/blues/blues.00000.au'
     # test_path = '/home/range/Data/GTZAN/data/blues/blues.00001.au'
+    # pre = compute_melgram(test_path)
+    # now = compute_melspectrogram(test_path)
+    # print(pre.shape, now.shape)
+
+    # path = '/home/range/Data/MusicFeature/GTZAN/spectrogram/'
+    # x_train, y_train = generate_data(path + 'train')
+    # print(x_train[0].shape)
+    # x_train = np.matrix(x_train)
+
