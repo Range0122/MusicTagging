@@ -3,10 +3,48 @@ import numpy as np
 import math
 import os
 import sys
+import random
 
 
-def compute_fbank(path):
-    y, sr = librosa.load(path, sr=None)
+def shuffle_both(a, b):
+    randnum = random.randint(0, 100)
+    random.seed(randnum)
+    random.shuffle(a)
+    random.seed(randnum)
+    random.shuffle(b)
+    return a, b
+
+
+def compute_mfcc(path):
+    y, sr = librosa.load(path, sr=None, duration=29.12)
+
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
+    delta = librosa.feature.delta(mfcc)
+    accelerate = librosa.feature.delta(delta)
+
+    feature = np.vstack((mfcc, delta, accelerate))
+
+    return feature[np.newaxis, :]
+
+
+def compute_new_spec(path):
+    y, sr = librosa.load(path, sr=None, duration=27.15)
+    # spectrogram = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=20)[np.newaxis, :]
+    # mfcc = librosa.feature.mfcc(y=y, sr=sr)[np.newaxis, :]
+
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
+    delta = librosa.feature.delta(mfcc)
+    accelerate = librosa.feature.delta(delta)
+
+    temp = np.vstack((mfcc, delta, accelerate))[np.newaxis, :]
+
+    feature = []
+    for i in range(9):
+        feature.append(temp[:, :, i * 130: (i + 1) * 130])
+    # spectrogram = spectrogram.reshape(2600,)
+    # spectrogram = np.mean(spectrogram, axis=1)
+
+    return feature
 
 
 def compute_melspectrogram(path):
@@ -72,12 +110,12 @@ def generate_data(path):
             label = labels.index(label)
             feature = np.load(file)
 
-            # x.append(feature[np.newaxis, :])
             x.append(feature)
+            # x.append(np.mean(feature, axis=2).flatten())
+            # x.append(feature.flatten())
             y.append(label)
-            # from keras.utils import to_categorical
-            # y.append(to_categorical(label, 10, 'int'))
-            print("x[0]!!!!!!!!!!!!!!!!!!", feature.shape)
+
+    x, y = shuffle_both(x, y)
     return np.array(x), np.array(y)
     # return x, y
 
@@ -95,21 +133,53 @@ def generate_spectrogram(root_path='/home/range/Data/GTZAN/data/'):
         path = root_path + label
         for root, dirs, files in os.walk(path):
             file_list = [root + '/' + file for file in files]
-            data['train'] += file_list[:70]
-            data['val'] += file_list[70:80]
-            data['test'] += file_list[80:]
+            data['train'] += file_list[:90]
+            data['val'] += file_list[90:]
+            data['test'] += file_list[90:]
 
     for item in data.keys():
         i = 0
         for path in data[item]:
-            feature = compute_melgram(path)
+            # feature = compute_melgram(path)
             # feature = compute_melspectrogram(path)
-            npy_path = f"/home/range/Data/MusicFeature/GTZAN/spectrogram/{item}/{path.split('/')[-1][:-3]}"
+            feature = compute_new_spec(path)
+            npy_path = f"/home/range/Data/MusicFeature/GTZAN/mfcc/{item}/{path.split('/')[-1][:-3]}"
             np.save(npy_path, feature)
 
             i += 1
             percent = i/len(data[item])
             progress(percent, width=30)
+
+
+def generate_short_feature(root_path='/home/range/Data/GTZAN/data/'):
+    """
+    generate spectrogram from GTZAN dataset
+    """
+
+    labels = ['hiphop', 'disco', 'country', 'classical', 'blues', 'reggae', 'rock', 'jazz', 'metal', 'pop']
+
+    data = {'train': [], 'val': [], 'test': []}
+
+    for label in labels:
+        path = root_path + label
+        for root, dirs, files in os.walk(path):
+            file_list = [root + '/' + file for file in files]
+            data['train'] += file_list[:80]
+            data['val'] += file_list[80:85]
+            data['test'] += file_list[85:]
+
+    for item in data.keys():
+        i = 0
+        for path in data[item]:
+            feature_list = compute_new_spec(path)
+            j = 0
+            for feature in feature_list:
+                npy_path = f"/home/range/Data/MusicFeature/GTZAN/short_3_mfcc/{item}/{path.split('/')[-1][:-3]}{j}"
+                np.save(npy_path, feature)
+                j += 1
+                i += 1
+                percent = i/(len(data[item])*9)
+                progress(percent, width=30)
 
 
 def generate_raw_waveform(root_path='/home/range/Data/GTZAN/data/'):
@@ -131,10 +201,8 @@ def generate_raw_waveform(root_path='/home/range/Data/GTZAN/data/'):
     for item in data.keys():
         i = 0
         for path in data[item]:
-            signal, sr = librosa.load(path, sr=None)
-            feature = signal[np.newaxis, :]
-            print(feature.shape)
-            exit()
+            signal, sr = librosa.load(path, sr=None, duration=29.12)
+            feature = signal
             npy_path = f"/home/range/Data/MusicFeature/GTZAN/raw_waveform/{item}/{path.split('/')[-1][:-3]}"
             np.save(npy_path, feature)
 
@@ -154,9 +222,15 @@ def progress(percent, width=50):
 
 
 if __name__ == '__main__':
-    generate_spectrogram()
+    # generate_spectrogram()
+    # generate_raw_waveform()
+    generate_short_feature()
 
     # test_path = '/home/range/Data/GTZAN/data/blues/blues.00001.au'
+    # compute_new_spec(test_path)
+
+    # compute_mfcc(test_path)
+    # test = compute_new_spec(test_path)
     # pre = compute_melgram(test_path)
     # now = compute_melspectrogram(test_path)
     # print(pre.shape, now.shape)

@@ -4,7 +4,11 @@ import os
 import tensorflow as tf
 import argparse
 import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.metrics import confusion_matrix, classification_report
 from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
+from keras import optimizers
+from keras.utils import to_categorical
 
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -21,7 +25,7 @@ def get_arguments():
 
 
 def main(args):
-    path = '/home/range/Data/MusicFeature/GTZAN/spectrogram/'
+    path = '/home/range/Data/MusicFeature/GTZAN/short_mfcc/'
 
     x_train, y_train = generate_data(path + 'train')
     x_val, y_val = generate_data(path + 'val')
@@ -36,18 +40,18 @@ def main(args):
         print(input_shape)
         exit()
 
-    print(input_shape)
-    model = Basic_GRU(input_shape, output_class)
+    # model = Basic_GRU(input_shape, output_class)
     # model = Basic_CNN(input_shape, output_class)
+    model = ResCNN(input_shape, output_class)
     model.summary()
-    model.compile(loss='sparse_categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+
+    sgd = optimizers.SGD(lr=0.01, momentum=0.9)
+    model.compile(loss='sparse_categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
 
     if args.target == 'train':
         history = model.fit(x_train, y_train, batch_size=64, epochs=150, validation_data=(x_val, y_val), verbose=1,
                             callbacks=[ModelCheckpoint(f'check_point/{model.name}_best.h5', monitor='val_loss',
-                                                       save_best_only=True, mode='min'),
-                                       ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, mode='min'),
-                                       EarlyStopping(monitor='val_loss', patience=100)]
+                                                       save_best_only=True, mode='min')]
                             )
 
         # plt.plot(history.history['loss'], label='train')
@@ -55,13 +59,20 @@ def main(args):
         # plt.legend()
         # plt.show()
     else:
+        model.load_weights(f'check_point/{model.name}_best.h5')
         score = model.evaluate(x_test, y_test, verbose=0)
         print('Test loss:', score[0])
         print('Test accuracy:', score[1])
+
+        y_pred = model.predict(x_test).argmax(axis=1)
+
+        labels = ['hiphop', 'disco', 'country', 'classical', 'blues', 'reggae', 'rock', 'jazz', 'metal', 'pop']
+
+        # cm = confusion_matrix(y_test, y_pred, labels)
+        result = classification_report(y_test, y_pred, target_names=labels)
+        print(result)
 
 
 if __name__ == "__main__":
     args = get_arguments()
     main(args)
-
-
