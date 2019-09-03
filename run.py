@@ -25,7 +25,7 @@ def get_arguments():
 
 
 def main(args):
-    path = '/home/range/Data/MusicFeature/GTZAN/short_mfcc/'
+    path = '/home/range/Data/MusicFeature/GTZAN/short_3_mfcc/'
 
     x_train, y_train = generate_data(path + 'train')
     x_val, y_val = generate_data(path + 'val')
@@ -40,13 +40,13 @@ def main(args):
         print(input_shape)
         exit()
 
-    # model = Basic_GRU(input_shape, output_class)
+    model = Basic_GRU(input_shape, output_class)
     # model = Basic_CNN(input_shape, output_class)
-    model = ResCNN(input_shape, output_class)
+    # model = ResCNN(input_shape, output_class)
     model.summary()
 
-    sgd = optimizers.SGD(lr=0.01, momentum=0.9)
-    model.compile(loss='sparse_categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
+    # sgd = optimizers.SGD(lr=0.01, momentum=0.9)
+    model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
     if args.target == 'train':
         history = model.fit(x_train, y_train, batch_size=64, epochs=150, validation_data=(x_val, y_val), verbose=1,
@@ -61,16 +61,27 @@ def main(args):
     else:
         model.load_weights(f'check_point/{model.name}_best.h5')
         score = model.evaluate(x_test, y_test, verbose=0)
-        print('Test loss:', score[0])
-        print('Test accuracy:', score[1])
+
+        print('\n*********Outline*********')
+        print('Test loss:\t%.4f' % score[0])
+        print('Test accuracy:\t%.4f' % score[1])
 
         y_pred = model.predict(x_test).argmax(axis=1)
 
         labels = ['hiphop', 'disco', 'country', 'classical', 'blues', 'reggae', 'rock', 'jazz', 'metal', 'pop']
 
-        # cm = confusion_matrix(y_test, y_pred, labels)
+        cm = confusion_matrix(y_test, y_pred)
+        print('\n*********Confusion Matrix*********\n', cm)
+
+        print('\n*********Accuracy Details*********')
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        accuracy = cm.diagonal()
+        for i in range(len(labels)):
+            # print('%s\t%-.4f' % ())
+            print('      {0:<10s}     {1:>.4f}'.format(labels[i], accuracy[i]))
+
         result = classification_report(y_test, y_pred, target_names=labels)
-        print(result)
+        print('\n*********Classification Report*********\n', result)
 
 
 if __name__ == "__main__":

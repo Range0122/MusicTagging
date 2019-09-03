@@ -29,18 +29,33 @@ def compute_mfcc(path):
 
 def compute_new_spec(path):
     y, sr = librosa.load(path, sr=None, duration=27.15)
-    # spectrogram = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=20)[np.newaxis, :]
+
+    spectrogram = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=39)[np.newaxis, :]
+    temp = librosa.amplitude_to_db(spectrogram ** 2, ref=1.0)
     # mfcc = librosa.feature.mfcc(y=y, sr=sr)[np.newaxis, :]
 
-    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
-    delta = librosa.feature.delta(mfcc)
-    accelerate = librosa.feature.delta(delta)
+    # mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
+    # delta = librosa.feature.delta(mfcc)
+    # accelerate = librosa.feature.delta(delta)
 
-    temp = np.vstack((mfcc, delta, accelerate))[np.newaxis, :]
+    # temp = np.vstack((mfcc, delta, accelerate))[np.newaxis, :]
+
+    # print(temp.shape)
+    # print(spectrogram.shape)
+    # exit()
 
     feature = []
-    for i in range(9):
-        feature.append(temp[:, :, i * 130: (i + 1) * 130])
+
+    overlap = 0.5
+    feature_length = 130
+    audio_length = temp.shape[2]
+    feature_num = int(math.floor(((audio_length / feature_length) - 1) / (1 - overlap) + 1))
+
+    for i in range(feature_num):
+        # print(i * (1 - overlap) * feature_length, (1 + i * (1 - overlap)) * feature_length)
+        start = int(i * (1 - overlap) * feature_length)
+        end = int((1 + i * (1 - overlap)) * feature_length)
+        feature.append(temp[:, :, start: end])
     # spectrogram = spectrogram.reshape(2600,)
     # spectrogram = np.mean(spectrogram, axis=1)
 
@@ -116,6 +131,32 @@ def generate_data(path):
             y.append(label)
 
     x, y = shuffle_both(x, y)
+
+    return np.array(x), np.array(y)
+    # return x, y
+
+
+def generate_data_svm(path):
+    """
+    path为存放所有的npy文件的目录
+    """
+    x = []
+    y = []
+    labels = ['hiphop', 'disco', 'country', 'classical', 'blues', 'reggae', 'rock', 'jazz', 'metal', 'pop']
+    for root, dirs, files in os.walk(path):
+        file_list = [root + '/' + file for file in files]
+        for file in file_list:
+            label = file.split('/')[-1].split('.')[0]
+            label = labels.index(label)
+            feature = np.load(file)
+
+            # x.append(feature)
+            x.append(np.mean(feature, axis=2).flatten())
+            # x.append(feature.flatten())
+            y.append(label)
+
+    x, y = shuffle_both(x, y)
+
     return np.array(x), np.array(y)
     # return x, y
 
@@ -174,7 +215,7 @@ def generate_short_feature(root_path='/home/range/Data/GTZAN/data/'):
             feature_list = compute_new_spec(path)
             j = 0
             for feature in feature_list:
-                npy_path = f"/home/range/Data/MusicFeature/GTZAN/short_3_mfcc/{item}/{path.split('/')[-1][:-3]}{j}"
+                npy_path = f"/home/range/Data/MusicFeature/GTZAN/short_spectrogram/{item}/{path.split('/')[-1][:-3]}{j}"
                 np.save(npy_path, feature)
                 j += 1
                 i += 1
@@ -227,7 +268,10 @@ if __name__ == '__main__':
     generate_short_feature()
 
     # test_path = '/home/range/Data/GTZAN/data/blues/blues.00001.au'
-    # compute_new_spec(test_path)
+    # feature = compute_new_spec(test_path)
+
+    # for item in feature:
+    #     print(item.shape)
 
     # compute_mfcc(test_path)
     # test = compute_new_spec(test_path)

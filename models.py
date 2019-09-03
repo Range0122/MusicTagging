@@ -11,29 +11,29 @@ def Basic_GRU(input_shape, output_class):
     x = BatchNormalization(name='bn1')(x)
     x = Activation('relu', name='conv_relu1')(x)
     x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool1')(x)
-    x = Dropout(0.3, name='dropout1')(x)
+    x = Dropout(0.2, name='dropout1')(x)
 
     x = Conv2D(128, (3, 3), strides=(1, 1), padding='same', name='conv2')(x)
     x = BatchNormalization(name='bn2')(x)
     x = Activation('relu', name='conv_relu2')(x)
     x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool2')(x)
-    x = Dropout(0.3, name='dropout2')(x)
+    x = Dropout(0.2, name='dropout2')(x)
 
     x = Conv2D(128, (3, 3), strides=(1, 1), padding='same', name='conv3')(x)
     x = BatchNormalization(name='bn3')(x)
     x = Activation('relu', name='conv_relu3')(x)
     x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool3')(x)
-    x = Dropout(0.3, name='dropout3')(x)
+    x = Dropout(0.2, name='dropout3')(x)
 
     x = Conv2D(128, (3, 3), strides=(1, 1), padding='same', name='conv4')(x)
     x = BatchNormalization(name='bn4')(x)
     x = Activation('relu', name='conv_relu4')(x)
     x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool4')(x)
-    x = Dropout(0.3, name='dropout4')(x)
+    x = Dropout(0.2, name='dropout4')(x)
 
     x = TimeDistributed(Flatten(), name='timedis1')(x)
-    x = GRU(64, return_sequences=True, name='gru1')(x)
-    x = GRU(64, return_sequences=False, name='gru2')(x)
+    x = GRU(128, return_sequences=True, name='gru1')(x)
+    x = GRU(128, return_sequences=False, name='gru2')(x)
     # x = GRU(128, return_sequences=True, name='gru3')(x)
     # x = GRU(128, return_sequences=False, name='gru4')(x)
     x = Dropout(0.3, name='gru_drop')(x)
@@ -42,6 +42,7 @@ def Basic_GRU(input_shape, output_class):
     x = BatchNormalization(name='fc_norm')(x)
     x = Activation('relu', name='fc_relu')(x)
 
+    # x = Dense(output_class, activation='softmax', name='fc2')(x)
     x = Dense(output_class, activation='sigmoid', name='fc2')(x)
 
     return Model(inputs=[x_in], outputs=[x], name='GRU')
@@ -79,23 +80,23 @@ def Basic_CNN(input_shape, output_class):
     # x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool5')(x)
     # x = Dropout(0.3, name='dropout5')(x)
 
-    # x = TimeDistributed(Flatten(), name='timedis1')(x)
+    x = TimeDistributed(Flatten(), name='timedis1')(x)
 
-    # x = GRU(512, return_sequences=True, name='gru1')(x)
-    # x = GRU(512, return_sequences=True, name='gru2')(x)
+    x = GRU(512, return_sequences=True, name='gru1')(x)
+    x = GRU(512, return_sequences=True, name='gru2')(x)
     # x = GRU(512, return_sequences=True, name='gru3')(x)
     # x = GRU(512, return_sequences=False, name='gru4')(x)
-    # x = Dropout(0.3, name='dropout_gru')(x)
+    x = Dropout(0.3, name='dropout_gru')(x)
 
-    # x = Dense(128, name='fc1')(x)
-    # x = BatchNormalization(name='fc1_norm')(x)
-    # x = Activation('relu', name='fc1_relu')(x)
+    x = Dense(128, name='fc1')(x)
+    x = BatchNormalization(name='fc1_norm')(x)
+    x = Activation('relu', name='fc1_relu')(x)
 
     # x = Dense(128, name='fc2')(x)
     # x = BatchNormalization(name='fc2_norm')(x)
     # x = Activation('relu', name='fc2_relu')(x)
 
-    x = Reshape((int(x.shape[1]) * int(x.shape[2]) * int(x.shape[3]),))(x)
+    # x = Reshape((int(x.shape[1]) * int(x.shape[2]) * int(x.shape[3]),))(x)
 
     x = Dense(output_class, activation='sigmoid', name='final_fc')(x)
 
