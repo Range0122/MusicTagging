@@ -7,43 +7,48 @@ import keras.backend as K
 
 def Basic_GRU(input_shape, output_class):
     x_in = Input(input_shape, name='input')
-    x = Conv2D(128, (3, 3), strides=(1, 1), padding='same', name='conv1')(x_in)
+
+    conv_units = 512
+    gru_units = 256
+    fc_units = 128
+
+    x = Conv2D(conv_units, (3, 3), strides=(1, 1), padding='same', name='conv1')(x_in)
     x = BatchNormalization(name='bn1')(x)
     x = Activation('relu', name='conv_relu1')(x)
     x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool1')(x)
     x = Dropout(0.2, name='dropout1')(x)
 
-    x = Conv2D(128, (3, 3), strides=(1, 1), padding='same', name='conv2')(x)
+    x = Conv2D(conv_units, (3, 3), strides=(1, 1), padding='same', name='conv2')(x)
     x = BatchNormalization(name='bn2')(x)
     x = Activation('relu', name='conv_relu2')(x)
     x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool2')(x)
     x = Dropout(0.2, name='dropout2')(x)
 
-    x = Conv2D(128, (3, 3), strides=(1, 1), padding='same', name='conv3')(x)
+    x = Conv2D(conv_units, (3, 3), strides=(1, 1), padding='same', name='conv3')(x)
     x = BatchNormalization(name='bn3')(x)
     x = Activation('relu', name='conv_relu3')(x)
     x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool3')(x)
     x = Dropout(0.2, name='dropout3')(x)
 
-    x = Conv2D(128, (3, 3), strides=(1, 1), padding='same', name='conv4')(x)
+    x = Conv2D(conv_units, (3, 3), strides=(1, 1), padding='same', name='conv4')(x)
     x = BatchNormalization(name='bn4')(x)
     x = Activation('relu', name='conv_relu4')(x)
     x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool4')(x)
     x = Dropout(0.2, name='dropout4')(x)
 
     x = TimeDistributed(Flatten(), name='timedis1')(x)
-    x = GRU(128, return_sequences=True, name='gru1')(x)
-    x = GRU(128, return_sequences=False, name='gru2')(x)
+    x = GRU(gru_units, return_sequences=True, name='gru1')(x)
+    x = GRU(gru_units, return_sequences=False, name='gru2')(x)
     # x = GRU(128, return_sequences=True, name='gru3')(x)
     # x = GRU(128, return_sequences=False, name='gru4')(x)
     x = Dropout(0.3, name='gru_drop')(x)
 
-    x = Dense(64, name='fc1')(x)
+    x = Dense(fc_units, name='fc1')(x)
     x = BatchNormalization(name='fc_norm')(x)
     x = Activation('relu', name='fc_relu')(x)
 
-    # x = Dense(output_class, activation='softmax', name='fc2')(x)
-    x = Dense(output_class, activation='sigmoid', name='fc2')(x)
+    x = Dense(output_class, activation='softmax', name='fc2')(x)
+    # x = Dense(output_class, activation='sigmoid', name='fc2')(x)
 
     return Model(inputs=[x_in], outputs=[x], name='GRU')
 
@@ -162,6 +167,7 @@ def ResCNN(input_shape, num_class):
 
     x = Dropout(0.2, name='final_drop')(x)
     x = Dense(num_class, kernel_initializer='glorot_uniform', name='logit')(x)
-    x = Activation('sigmoid', name='pred')(x)
+    # x = Activation('sigmoid', name='pred')(x)
+    x = Activation('softmax', name='pred')(x)
 
     return Model(inputs=[x_in], outputs=[x], name='ResCNN')

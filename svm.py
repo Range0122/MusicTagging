@@ -5,7 +5,7 @@ from sklearn.linear_model import LogisticRegression
 from Process.feature import generate_data_svm
 import numpy as np
 
-path = '/home/range/Data/MusicFeature/GTZAN/short_3_mfcc/'
+path = '/home/range/Data/MusicFeature/GTZAN/stft/'
 
 x_train, y_train = generate_data_svm(path + 'train')
 x_val, y_val = generate_data_svm(path + 'val')
@@ -29,8 +29,8 @@ x_train = S.transform(x_train)
 x_test = S.transform(x_test)
 
 # model = LogisticRegression(C=1)
-# model = SVC(C=0.5, kernel='poly', degree=3)
-model = GaussianNB()
+model = SVC(C=0.5, kernel='poly', degree=3)
+# model = GaussianNB()
 # model = LinearSVC()
 
 model.fit(x_train, y_train)
