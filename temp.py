@@ -1,14 +1,17 @@
-import numpy as np
+import csv
 
-labels = ['hiphop', 'disco', 'country', 'classical', 'blues', 'reggae', 'rock', 'jazz', 'metal', 'pop']
-accuracy = np.array([0.28235294, 0.5372549, 0.39215686, 0.97254902, 0.61176471, 0.54901961, 0.31372549, 0.81176471,
-                     0.76078431, 0.69803922])
+path = '/home/range/Data/TagATune/raw/annotations_final.csv'
+# path = '/home/range/Data/TagATune/raw/clip_info_final.csv'
+# path = '/home/range/Data/TagATune/raw/comparisons_final.csv'
 
-print('\t{0:<10s}\t\t{1}'.format('Class', 'Accuracy'))
-for i in range(len(labels)):
-    # print('%s\t%-.4f' % ())
-    print('\t{0:<10s}\t\t{1:>.4f}'.format(labels[i], accuracy[i]))
+with open(path) as csv_file:
+    csv_reader = csv.reader(csv_file)
+    # header = csv_reader.next()
+    # print(header)
+    i = 0
+    for item in csv_reader:
+        print(item)
+        i += 1
+        if i == 2:
+            exit()
 
-# print('ZHeHSIHJXABJKHD         asdjkdhaw')
-# for i in range(len(labels)):
-#     print('{0:>9s} {1:>}'.format(labels[i], labels[i]))

@@ -4,6 +4,7 @@ import math
 import os
 import sys
 import random
+import pandas as pd
 from python_speech_features import logfbank, fbank
 
 
@@ -18,20 +19,23 @@ def shuffle_both(a, b):
 
 def compute_total_feature(path):
     y, sr = librosa.load(path, sr=None, duration=29.12)
-    feature = logfbank(y, sr).T
+    feature = librosa.feature.melspectrogram(y, sr)
+    # print(feature.shape)
+    # feature = logfbank(y, sr).T
 
     return feature[np.newaxis, :]
 
 
 def compute_short_feature(path):
-    y, sr = librosa.load(path, sr=None, duration=27.15)
+    y, sr = librosa.load(path, sr=None, duration=29.18)
 
-    spectrogram = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=39)[np.newaxis, :]
-    temp = librosa.amplitude_to_db(spectrogram ** 2, ref=1.0)
+    temp = logfbank(y, sr).T[np.newaxis, :]
+    # spectrogram = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=39)[np.newaxis, :]
+    # temp = librosa.amplitude_to_db(spectrogram ** 2, ref=1.0)
 
     feature = []
     overlap = 0.5
-    feature_length = 130
+    feature_length = 320
     audio_length = temp.shape[2]
     feature_num = int(math.floor(((audio_length / feature_length) - 1) / (1 - overlap) + 1))
 
@@ -51,7 +55,12 @@ def generate_data(path):
     y = []
     labels = ['hiphop', 'disco', 'country', 'classical', 'blues', 'reggae', 'rock', 'jazz', 'metal', 'pop']
     for root, dirs, files in os.walk(path):
-        file_list = [root + '/' + file for file in files]
+        # file_list = [root + '/' + file for file in files]
+        file_list = []
+        for file in files:
+            file_list += '/'.join((root, file))
+
+        i = 0
         for file in file_list:
             label = file.split('/')[-1].split('.')[0]
             label = labels.index(label)
@@ -62,29 +71,52 @@ def generate_data(path):
             # x.append(feature.flatten())
             y.append(label)
 
+            i += 1
+            percent = i / len(file_list)
+            progress(percent, width=30)
+
     x, y = shuffle_both(x, y)
 
     return np.array(x), np.array(y)
 
 
-def generate_data_svm(path):
+def generate_data_for_MTAT(path):
     """
     path为存放所有的npy文件的目录
     """
+    # load annotation csv
+    tags = ['choral', 'female voice', 'metal', 'country', 'weird', 'no voice',
+            'cello', 'harp', 'beats', 'female vocal', 'male voice', 'dance',
+            'new age', 'voice', 'choir', 'classic', 'man', 'solo', 'sitar', 'soft',
+            'pop', 'no vocal', 'male vocal', 'woman', 'flute', 'quiet', 'loud',
+            'harpsichord', 'no vocals', 'vocals', 'singing', 'male', 'opera',
+            'indian', 'female', 'synth', 'vocal', 'violin', 'beat', 'ambient',
+            'piano', 'fast', 'rock', 'electronic', 'drums', 'strings', 'techno',
+            'slow', 'classical', 'guitar']
+    df = pd.read_csv('/home/range/Data/MTAT/raw/annotations_mapping.csv', delimiter='\t')
+    mp3_paths = df['mp3_path'].values
+    labels = df[tags].values
+
     x = []
     y = []
-    labels = ['hiphop', 'disco', 'country', 'classical', 'blues', 'reggae', 'rock', 'jazz', 'metal', 'pop']
     for root, dirs, files in os.walk(path):
-        file_list = [root + '/' + file for file in files]
-        for file in file_list:
-            label = file.split('/')[-1].split('.')[0]
-            label = labels.index(label)
-            feature = np.load(file)
+        # file_list = [root + '/' + file for file in files]
 
-            # x.append(feature)
-            x.append(np.mean(feature, axis=2).flatten())
+        i = 0
+        for file in files:
+            file_path = '/'.join((root, file))
+
+            feature = np.load(file_path)
+            label = labels[mp3_paths.index(file)]
+
+            x.append(feature)
+            # x.append(np.mean(feature, axis=2).flatten())
             # x.append(feature.flatten())
             y.append(label)
+
+            i += 1
+            percent = i / len(files)
+            progress(percent, width=30)
 
     x, y = shuffle_both(x, y)
 
@@ -116,7 +148,7 @@ def generate_total_feature(root_path='/home/range/Data/GTZAN/data/'):
             np.save(npy_path, feature)
 
             i += 1
-            percent = i/len(data[item])
+            percent = i / len(data[item])
             progress(percent, width=30)
 
 
@@ -124,7 +156,7 @@ def generate_short_feature(root_path='/home/range/Data/GTZAN/data/'):
     """
     generate feature from GTZAN dataset
     """
-    feature_type = 'logfbank'
+    feature_type = 'short_logfbank'
     labels = ['hiphop', 'disco', 'country', 'classical', 'blues', 'reggae', 'rock', 'jazz', 'metal', 'pop']
 
     data = {'train': [], 'val': [], 'test': []}
@@ -143,13 +175,85 @@ def generate_short_feature(root_path='/home/range/Data/GTZAN/data/'):
             feature_list = compute_short_feature(path)
             feature_num = len(feature_list)
             j = 0
-            for feature in feature_list:
+            # # 取所有的feature
+            # for feature in feature_list:
+            #     npy_path = f"/home/range/Data/MusicFeature/GTZAN/{feature_type}/{item}/{path.split('/')[-1][:-3]}{j}"
+            #     np.save(npy_path, feature)
+            #     j += 1
+            #     i += 1
+            #     percent = i/(len(data[item]) * feature_num)
+            #     progress(percent, width=30)
+            # 只取中间部分的feature，去掉开头和末尾
+            for k in range(feature_num - 4):
+                k = k + 2
                 npy_path = f"/home/range/Data/MusicFeature/GTZAN/{feature_type}/{item}/{path.split('/')[-1][:-3]}{j}"
+                feature = feature_list[k]
                 np.save(npy_path, feature)
                 j += 1
                 i += 1
-                percent = i/(len(data[item]) * feature_num)
+                percent = i / (len(data[item]) * feature_num)
                 progress(percent, width=30)
+
+
+def create_dataset_for_MTAT():
+    # load annotation csv
+    tags = ['choral', 'female voice', 'metal', 'country', 'weird', 'no voice',
+            'cello', 'harp', 'beats', 'female vocal', 'male voice', 'dance',
+            'new age', 'voice', 'choir', 'classic', 'man', 'solo', 'sitar', 'soft',
+            'pop', 'no vocal', 'male vocal', 'woman', 'flute', 'quiet', 'loud',
+            'harpsichord', 'no vocals', 'vocals', 'singing', 'male', 'opera',
+            'indian', 'female', 'synth', 'vocal', 'violin', 'beat', 'ambient',
+            'piano', 'fast', 'rock', 'electronic', 'drums', 'strings', 'techno',
+            'slow', 'classical', 'guitar']
+    df = pd.read_csv('/home/range/Data/MTAT/raw/annotations_final.csv', delimiter='\t')
+    # mp3_paths = df['mp3_path'].values
+    labels = df[tags].values
+
+    # split dataset
+    train_paths, val_paths, test_paths = [], [], []
+    train_labels, val_labels, test_labels = [], [], []
+    for index, x in enumerate(df['mp3_path']):
+        directory = x.split('/')[0]
+        part = int(directory, 16)
+        if part in range(12):
+            train_paths.append(x)
+            train_labels.append(labels[index])
+        elif part is 12:
+            val_paths.append(x)
+            val_labels.append(labels[index])
+        elif part in range(13, 16):
+            test_paths.append(x)
+            test_labels.append(labels[index])
+
+    train_dataset = (train_paths, train_labels)
+    val_dataset = (val_paths, val_labels)
+    test_dataset = (test_paths, test_labels)
+
+    return train_dataset, val_dataset, test_dataset
+
+
+def generate_feature_for_MTAT(dataset, set_type):
+    """
+    The input parameter dataset is from create_dataset_for_MTAT
+    eg. (train_paths, train_labels)
+    set_type is for train/val/test
+    """
+    audio_root = '/home/range/Data/MTAT/raw/mp3/'
+    npy_root = '/home/range/Data/MusicFeature/MTAT/Spectrogram'
+    for i in range(len(dataset[0])):
+        try:
+            path = ''.join((audio_root, dataset[0][i]))
+            feature = compute_total_feature(path)
+
+            file = dataset[0][i][2:-4]
+            npy_path = '/'.join((npy_root, set_type, file))
+            np.save(npy_path, feature)
+
+            i += 1
+            percent = i / len(dataset[0])
+            progress(percent, width=30)
+        except Exception as e:
+            print(e)
 
 
 def progress(percent, width=50):
@@ -163,8 +267,38 @@ def progress(percent, width=50):
 
 
 if __name__ == '__main__':
+    path = '/home/range/Data/MusicFeature/MTAT/Spectrogram/train'
+    tags = ['choral', 'female voice', 'metal', 'country', 'weird', 'no voice',
+            'cello', 'harp', 'beats', 'female vocal', 'male voice', 'dance',
+            'new age', 'voice', 'choir', 'classic', 'man', 'solo', 'sitar', 'soft',
+            'pop', 'no vocal', 'male vocal', 'woman', 'flute', 'quiet', 'loud',
+            'harpsichord', 'no vocals', 'vocals', 'singing', 'male', 'opera',
+            'indian', 'female', 'synth', 'vocal', 'violin', 'beat', 'ambient',
+            'piano', 'fast', 'rock', 'electronic', 'drums', 'strings', 'techno',
+            'slow', 'classical', 'guitar']
+    df = pd.read_csv('/home/range/Data/MTAT/raw/annotations_mapping.csv', delimiter='\t')
+    mp3_paths = df['mp3_path'].values
+    labels = df[tags].values
+
+    x = []
+    y = []
+    for root, dirs, files in os.walk(path):
+        # file_list = [root + '/' + file for file in files]
+
+        i = 0
+        for file in files:
+            file_path = '/'.join((root, file))
+
+            feature = np.load(file_path)
+            label = labels[mp3_paths.index(file)]
+
+    # train, val, test = create_dataset_for_MTAT()
+    # generate_feature_for_MTAT(train, 'train')
+    # generate_feature_for_MTAT(val, 'val')
+    # generate_feature_for_MTAT(test, 'test')
+
     # generate_short_feature()
-    generate_total_feature()
+    # generate_total_feature()
 
     # test_path = '/home/range/Data/GTZAN/data/blues/blues.00001.au'
     # feature = compute_total_feature(test_path)
