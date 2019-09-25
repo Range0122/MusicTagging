@@ -1,5 +1,5 @@
 from models import *
-from Process.feature import generate_data
+from Process.feature import generate_data, generate_data_from_MTAT, data_generator_for_MTAT
 import os
 import tensorflow as tf
 import argparse
@@ -7,12 +7,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import confusion_matrix, classification_report
 from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
+from keras.metrics import categorical_accuracy
 from keras import optimizers
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
-config.gpu_options.per_process_gpu_memory_fraction = 0.95
+config.gpu_options.per_process_gpu_memory_fraction = 0.9
 sess = tf.Session(config=config)
 
 
@@ -26,41 +27,37 @@ def main(args):
     # path = '/home/range/Data/MusicFeature/GTZAN/short_logfbank/'
     path = '/home/range/Data/MusicFeature/MTAT/Spectrogram'
 
-    x_train, y_train = generate_data('/'.join((path, 'train')))
-    x_val, y_val = generate_data('/'.join((path, 'val')))
-    x_test, y_test = generate_data('/'.join((path, 'test')))
+    x_val, y_val = generate_data_from_MTAT('/'.join((path, 'val')))
 
-    input_shape = x_train[0].shape
+    input_shape = x_val[0].shape
     output_class = 50
+    batch_size = 128
 
-    # debug = False
-    debug = True
+    debug = False
+    # debug = True
     if debug:
-        print(input_shape)
         exit()
 
     model = Basic_GRU(input_shape, output_class)
     # model = Basic_CNN(input_shape, output_class)
     # model = ResCNN(input_shape, output_class)
     model.summary()
-
     # sgd = optimizers.SGD(lr=0.01, momentum=0.9)
-    model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=[categorical_accuracy])
 
     if args.target == 'train':
-        history = model.fit(x_train, y_train, batch_size=64, epochs=150, shuffle=True, validation_data=(x_val, y_val),
-                            verbose=1, callbacks=[ModelCheckpoint(f'check_point/{model.name}_best.h5',
-                                                                  monitor='val_loss', save_best_only=True, mode='min'),
-                                                  ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10,
-                                                                    mode='min'),
-                                                  EarlyStopping(monitor='val_loss', patience=20)])
-
-        # plt.plot(history.history['loss'], label='train')
-        # plt.plot(history.history['val_loss'], label='test')
-        # plt.legend()
-        # plt.show()
+        model.fit_generator(data_generator_for_MTAT('/'.join((path, 'train'))), epochs=50,
+                            steps_per_epoch=18706 // batch_size,
+                            validation_data=(x_val, y_val), validation_steps=len(x_val) // batch_size, verbose=1,
+                            callbacks=[ModelCheckpoint(f'check_point/{model.name}_best.h5',
+                                                       monitor='val_loss', save_best_only=True, mode='min'),
+                                       ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10,
+                                                         mode='min'),
+                                       EarlyStopping(monitor='val_loss', patience=20)])
     else:
         model.load_weights(f'check_point/{model.name}_best.h5')
+        
+        x_test, y_test = generate_data_from_MTAT('/'.join((path, 'test')))
         score = model.evaluate(x_test, y_test, verbose=0)
 
         print('\n*********Outline*********')

@@ -8,9 +8,9 @@ import keras.backend as K
 def Basic_GRU(input_shape, output_class):
     x_in = Input(input_shape, name='input')
 
-    conv_units = 128
-    gru_units = 64
-    fc_units = 64
+    conv_units = 512
+    gru_units = 256
+    fc_units = 128
 
     x = Conv2D(conv_units, (3, 3), strides=(1, 1), padding='same', name='conv1')(x_in)
     x = BatchNormalization(name='bn1')(x)
@@ -47,10 +47,10 @@ def Basic_GRU(input_shape, output_class):
     x = BatchNormalization(name='fc_norm')(x)
     x = Activation('relu', name='fc_relu')(x)
 
-    x = Dense(output_class, activation='softmax', name='fc2')(x)
-    # x = Dense(output_class, activation='sigmoid', name='fc2')(x)
+    # x = Dense(output_class, activation='softmax', name='final_fc')(x)
+    x = Dense(output_class, activation='sigmoid', name='final_fc')(x)
 
-    return Model(inputs=[x_in], outputs=[x], name='GRU')
+    return Model(inputs=[x_in], outputs=[x], name='Basic_GRU')
 
 
 def Basic_CNN(input_shape, output_class):
