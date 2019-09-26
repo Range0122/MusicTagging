@@ -5,6 +5,7 @@ import os
 import sys
 import random
 import pandas as pd
+import config as C
 from python_speech_features import logfbank, fbank
 
 
@@ -104,25 +105,26 @@ def data_generator_for_MTAT(path):
     for root, dirs, files in os.walk(path):
         length = len(files)
         np.random.shuffle(files)
-        batch_size = 128
-        index = 0
-        while index < length - batch_size:
-            x = []
-            y = []
+        while True:
+            batch_size = C.BATCH_SIZE
+            index = 0
+            while index < length - batch_size:
+                x = []
+                y = []
 
-            for file in files[index:index + batch_size]:
-                file_path = '/'.join((root, file))
+                for file in files[index:index + batch_size]:
+                    file_path = '/'.join((root, file))
 
-                feature = np.load(file_path)
-                label = labels[mp3_paths.index(file[:-4])]
+                    feature = np.load(file_path)
+                    label = labels[mp3_paths.index(file[:-4])]
 
-                x.append(feature)
-                y.append(label)
+                    x.append(feature)
+                    y.append(label)
 
-            index += batch_size
+                index += batch_size
 
-            x, y = shuffle_both(x, y)
-            yield np.array(x), np.array(y)
+                x, y = shuffle_both(x, y)
+                yield np.array(x), np.array(y)
 
 
 def generate_data_from_MTAT(path):
@@ -167,6 +169,12 @@ def generate_data_from_MTAT(path):
     x, y = shuffle_both(x, y)
 
     return np.array(x), np.array(y)
+
+
+def get_data_shape():
+    npy_path = '/home/range/Data/MusicFeature/MTAT/Spectrogram/val/glen_bledsoe-up_and_down-09-rumination-175-204.npy'
+    feature = np.load(npy_path)
+    return feature.shape
 
 
 def generate_total_feature(root_path='/home/range/Data/GTZAN/data/'):
