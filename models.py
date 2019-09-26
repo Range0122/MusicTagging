@@ -3,14 +3,18 @@ from keras.layers import Input, BatchNormalization, Activation, MaxPool2D, Resha
 from keras.layers import Conv2D, TimeDistributed, GRU, Dense, Dropout, Flatten, LSTM, Add
 from keras.regularizers import l2
 import keras.backend as K
+from keras import backend as K
 
 
 def Basic_GRU(input_shape, output_class):
+    # set for Basic_GRU
+    K.set_image_dim_ordering('th')
+
     x_in = Input(input_shape, name='input')
 
-    conv_units = 512
-    gru_units = 256
-    fc_units = 128
+    conv_units = 256
+    gru_units = 128
+    fc_units = 64
 
     x = Conv2D(conv_units, (3, 3), strides=(1, 1), padding='same', name='conv1')(x_in)
     x = BatchNormalization(name='bn1')(x)
@@ -18,29 +22,11 @@ def Basic_GRU(input_shape, output_class):
     x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool1')(x)
     x = Dropout(0.2, name='dropout1')(x)
 
-    x = Conv2D(conv_units, (3, 3), strides=(1, 1), padding='same', name='conv2')(x)
-    x = BatchNormalization(name='bn2')(x)
-    x = Activation('relu', name='conv_relu2')(x)
-    x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool2')(x)
-    x = Dropout(0.2, name='dropout2')(x)
-
-    x = Conv2D(conv_units, (3, 3), strides=(1, 1), padding='same', name='conv3')(x)
-    x = BatchNormalization(name='bn3')(x)
-    x = Activation('relu', name='conv_relu3')(x)
-    x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool3')(x)
-    x = Dropout(0.2, name='dropout3')(x)
-
-    x = Conv2D(conv_units, (3, 3), strides=(1, 1), padding='same', name='conv4')(x)
-    x = BatchNormalization(name='bn4')(x)
-    x = Activation('relu', name='conv_relu4')(x)
-    x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool4')(x)
-    x = Dropout(0.2, name='dropout4')(x)
-
     x = TimeDistributed(Flatten(), name='timedis1')(x)
     x = GRU(gru_units, return_sequences=True, name='gru1')(x)
-    x = GRU(gru_units, return_sequences=False, name='gru2')(x)
-    # x = GRU(128, return_sequences=True, name='gru3')(x)
-    # x = GRU(128, return_sequences=False, name='gru4')(x)
+    x = GRU(gru_units, return_sequences=True, name='gru2')(x)
+    x = GRU(gru_units, return_sequences=True, name='gru3')(x)
+    x = GRU(gru_units, return_sequences=False, name='gru4')(x)
     x = Dropout(0.3, name='gru_drop')(x)
 
     x = Dense(fc_units, name='fc1')(x)
@@ -53,54 +39,54 @@ def Basic_GRU(input_shape, output_class):
     return Model(inputs=[x_in], outputs=[x], name='Basic_GRU')
 
 
-def Basic_CNN(input_shape, output_class):
-    conv_units = 64
-    fc_units = 32
-
+def CRNN(input_shape, output_class):
     x_in = Input(input_shape, name='input')
-    x = Conv2D(conv_units, (3, 3), strides=(1, 1), padding='same', name='conv1')(x_in)
+
+    # Input block
+    x = ZeroPadding2D(padding=(0, 37))(x_in)
+    x = BatchNormalization(name='bn_0_freq')(x)
+
+    # Conv block 1
+
+    x = Conv2D(64, (3, 3), padding='same', name='conv1')(x_in)
     x = BatchNormalization(name='bn1')(x)
-    x = Activation('relu', name='conv_relu1')(x)
+    x = ELU()(x)
     x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool1')(x)
-    x = Dropout(0.3, name='dropout1')(x)
+    x = Dropout(0.1, name='dropout1')(x)
 
-    x = Conv2D(conv_units, (3, 3), strides=(1, 1), padding='same', name='conv2')(x)
+    # Conv block 2
+    x = Conv2D(128, (3, 3), padding='same', name='conv2')(x)
     x = BatchNormalization(name='bn2')(x)
-    x = Activation('relu', name='conv_relu2')(x)
-    x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool2')(x)
-    x = Dropout(0.3, name='dropout2')(x)
+    x = ELU()(x)
+    x = MaxPool2D((3, 3), strides=(3, 3), padding='same', name='pool2')(x)
+    x = Dropout(0.1, name='dropout2')(x)
 
-    x = Conv2D(conv_units, (3, 3), strides=(1, 1), padding='same', name='conv3')(x)
+    # Conv block 3
+    x = Conv2D(128, (3, 3), padding='same', name='conv3')(x)
     x = BatchNormalization(name='bn3')(x)
-    x = Activation('relu', name='conv_relu3')(x)
-    x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool3')(x)
-    x = Dropout(0.3, name='dropout3')(x)
+    x = ELU()(x)
+    x = MaxPool2D((4, 4), strides=(4, 4), padding='same', name='pool3')(x)
+    x = Dropout(0.1, name='dropout3')(x)
 
-    # x = Conv2D(64, (3, 3), strides=(1, 1), padding='same', name='conv4')(x)
-    # x = BatchNormalization(name='bn4')(x)
-    # x = Activation('relu', name='conv_relu4')(x)
-    # x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool4')(x)
-    # x = Dropout(0.3, name='dropout4')(x)
-    #
-    # x = Conv2D(64, (3, 3), strides=(1, 1), padding='same', name='conv5')(x)
-    # x = BatchNormalization(name='bn5')(x)
-    # x = Activation('relu', name='conv_relu5')(x)
-    # x = MaxPool2D((2, 2), strides=(2, 2), padding='same', name='pool5')(x)
-    # x = Dropout(0.3, name='dropout5')(x)
+    # Conv block 4
+    x = Conv2D(128, (3, 3), padding='same', name='conv4')(x)
+    x = BatchNormalization(name='bn4')(x)
+    x = ELU()(x)
+    x = MaxPool2D((4, 4), strides=(4, 4), padding='same', name='pool4')(x)
+    x = Dropout(0.1, name='dropout4')(x)
 
-    x = Dense(fc_units, name='fc1')(x)
-    x = BatchNormalization(name='fc1_norm')(x)
-    x = Activation('relu', name='fc1_relu')(x)
+    # reshaping
+    x = TimeDistributed(Flatten(), name='timedis1')(x)
+    # x = Reshape((x.shape[0], x.shape[1] * x.shape[2]))(x)
 
-    # x = Dense(128, name='fc2')(x)
-    # x = BatchNormalization(name='fc2_norm')(x)
-    # x = Activation('relu', name='fc2_relu')(x)
+    # GRU block 1, 2, output
+    x = GRU(32, return_sequences=True, name='gru1')(x)
+    x = GRU(32, return_sequences=False, name='gru2')(x)
+    x = Dropout(0.3)(x)
 
-    x = Reshape((int(x.shape[1]) * int(x.shape[2]) * int(x.shape[3]),))(x)
+    x = Dense(output_class, activation='sigmoid', name='output')(x)
 
-    x = Dense(output_class, activation='sigmoid', name='final_fc')(x)
-
-    return Model(inputs=[x_in], outputs=[x], name='CNN')
+    return Model(inputs=[x_in], outputs=[x], name='CRNN')
 
 
 def res_conv_block(x, filters, strides, name):
@@ -166,35 +152,3 @@ def ResCNN(input_shape, num_class):
     x = Activation('softmax', name='pred')(x)
 
     return Model(inputs=[x_in], outputs=[x], name='ResCNN')
-
-
-def cnn_block(model, num_filters, pool_size, layer_id):
-    model.add(Conv2D(num_filters, 3, padding='same', name=f'conv{layer_id}'))
-    model.add(BatchNormalization(axis=-1, name=f'bn{layer_id}'))
-    model.add(ELU(name=f'elu{layer_id}'))
-    model.add(MaxPool2D(pool_size, name=f'pool{layer_id}'))
-    model.add(Dropout(0.1, name=f'dropout{layer_id}'))
-
-    return model
-
-
-def CRNN(input_shape, num_class):
-    model = Sequential()
-
-    model.add(ZeroPadding2D((0, 37), input_shape=input_shape))
-    model = cnn_block(model, 64, (3, 3), 1)
-    model = cnn_block(model, 128, (2, 2), 2)
-    model = cnn_block(model, 128, (4, 4), 3)
-    model = cnn_block(model, 128, (4, 4), 4)
-
-    model.add(Reshape((15, 128)))
-
-    model.add(GRU(32, return_sequences=True, name='gru1'))
-    model.add(GRU(32, return_sequences=False, name='gru2'))
-    model.add(Dropout(0.3, name=f'dropout5'))
-
-    model.add(Dense(num_class, activation='sigmoid', name='output'))
-
-    model.summary()
-
-    return model

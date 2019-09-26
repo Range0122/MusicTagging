@@ -24,7 +24,7 @@ def compute_total_feature(path):
     # print(feature.shape)
     # feature = logfbank(y, sr).T
 
-    return feature[np.newaxis, :]
+    return feature[:, :, np.newaxis]
 
 
 def compute_short_feature(path):
@@ -165,6 +165,8 @@ def generate_data_from_MTAT(path):
             i += 1
             percent = i / len(files)
             progress(percent, width=30)
+
+        print('\n')
 
     x, y = shuffle_both(x, y)
 
@@ -321,16 +323,16 @@ def progress(percent, width=50):
 
 
 if __name__ == '__main__':
-    pass
+    # pass
 
-# train, val, test = create_dataset_for_MTAT()
-# generate_feature_for_MTAT(train, 'train')
-# generate_feature_for_MTAT(val, 'val')
-# generate_feature_for_MTAT(test, 'test')
+    train, val, test = create_dataset_for_MTAT()
+    generate_feature_for_MTAT(train, 'train')
+    generate_feature_for_MTAT(val, 'val')
+    generate_feature_for_MTAT(test, 'test')
 
-# generate_short_feature()
-# generate_total_feature()
+    # generate_short_feature()
+    # generate_total_feature()
 
-# test_path = '/home/range/Data/GTZAN/data/blues/blues.00001.au'
-# feature = compute_total_feature(test_path)
-# feature = compute_short_feature(test_path)
+    # test_path = '/home/range/Data/GTZAN/data/blues/blues.00001.au'
+    # feature = compute_total_feature(test_path)
+    # feature = compute_short_feature(test_path)

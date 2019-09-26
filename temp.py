@@ -1,17 +1,7 @@
-import csv
+from keras import Model, Sequential
+from keras.layers import Input, BatchNormalization, Activation, MaxPool2D, Reshape, ELU, Lambda, ZeroPadding2D
+from keras.layers import Conv2D, TimeDistributed, GRU, Dense, Dropout, Flatten, LSTM, Add
+from keras.regularizers import l2
+import keras.backend as K
 
-path = '/home/range/Data/TagATune/raw/annotations_final.csv'
-# path = '/home/range/Data/TagATune/raw/clip_info_final.csv'
-# path = '/home/range/Data/TagATune/raw/comparisons_final.csv'
-
-with open(path) as csv_file:
-    csv_reader = csv.reader(csv_file)
-    # header = csv_reader.next()
-    # print(header)
-    i = 0
-    for item in csv_reader:
-        print(item)
-        i += 1
-        if i == 2:
-            exit()
 
