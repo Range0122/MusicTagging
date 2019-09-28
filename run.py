@@ -14,7 +14,7 @@ from keras import optimizers
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
-config.gpu_options.per_process_gpu_memory_fraction = 0.9
+config.gpu_options.per_process_gpu_memory_fraction = 0.99
 sess = tf.Session(config=config)
 
 
@@ -68,10 +68,10 @@ def main(args):
         print(input_shape)
         exit()
 
-    model = Basic_GRU(input_shape, output_class)
+    # model = Basic_GRU(input_shape, output_class)
     # model = Basic_CNN(input_shape, output_class)
     # model = ResCNN(input_shape, output_class)
-    # model = CRNN(input_shape, output_class)
+    model = CRNN(input_shape, output_class)
     model.summary()
 
     optimizer = optimizers.SGD(lr=0.1, momentum=0.9, nesterov=True, decay=1e-6)
