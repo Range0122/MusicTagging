@@ -39,6 +39,8 @@ def Basic_GRU(input_shape, output_class):
 
 
 def CRNN(input_shape, output_class):
+    K.set_image_dim_ordering('th')
+
     x_in = Input(input_shape, name='input')
 
     # Input block

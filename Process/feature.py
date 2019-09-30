@@ -9,6 +9,29 @@ import config as C
 from python_speech_features import logfbank, fbank
 
 
+def compute_melgram(audio_path):
+    SR = 12000
+    N_FFT = 512
+    N_MELS = 96
+    HOP_LEN = 256
+    DURA = 29.12  # to make it 1366 frame..
+
+    src, sr = librosa.load(audio_path, sr=SR)  # whole signal
+    n_sample = src.shape[0]
+    n_sample_fit = int(DURA * SR)
+
+    if n_sample < n_sample_fit:  # if too short
+        src = np.hstack((src, np.zeros((int(DURA * SR) - n_sample,))))
+    elif n_sample > n_sample_fit:  # if too long
+        src = src[(n_sample-n_sample_fit)//2:(n_sample+n_sample_fit)//2]
+    logam = librosa.amplitude_to_db
+    melgram = librosa.feature.melspectrogram
+    ret = logam(melgram(y=src, sr=SR, hop_length=HOP_LEN,
+                        n_fft=N_FFT, n_mels=N_MELS))
+    ret = ret[:, :, np.newaxis]
+    return ret
+
+
 def shuffle_both(a, b):
     randnum = random.randint(0, 100)
     random.seed(randnum)
@@ -174,7 +197,8 @@ def generate_data_from_MTAT(path):
 
 
 def get_data_shape():
-    npy_path = '/home/range/Data/MusicFeature/MTAT/Spectrogram/val/glen_bledsoe-up_and_down-09-rumination-175-204.npy'
+    # npy_path = '/home/range/Data/MusicFeature/MTAT/Spectrogram/val/glen_bledsoe-up_and_down-09-rumination-175-204.npy'
+    npy_path = '/home/range/Data/MusicFeature/MTAT/Old_spectrogram/val/glen_bledsoe-up_and_down-09-rumination-175-204.npy'
     feature = np.load(npy_path)
     return feature.shape
 
@@ -295,11 +319,12 @@ def generate_feature_for_MTAT(dataset, set_type):
     set_type is for train/val/test
     """
     audio_root = '/home/range/Data/MTAT/raw/mp3/'
-    npy_root = '/home/range/Data/MusicFeature/MTAT/Spectrogram'
+    npy_root = '/home/range/Data/MusicFeature/MTAT/Old_spectrogram'
     for i in range(len(dataset[0])):
         try:
             path = ''.join((audio_root, dataset[0][i]))
-            feature = compute_total_feature(path)
+            # feature = compute_total_feature(path)
+            feature = compute_melgram(path)
 
             file = dataset[0][i][2:-4]
             npy_path = '/'.join((npy_root, set_type, file))
@@ -324,6 +349,9 @@ def progress(percent, width=50):
 
 if __name__ == '__main__':
     # pass
+    # test_path = '/home/range/Data/MTAT/raw/mp3/2/zephyrus-angelus-10-ave_maria___benedicta_to_ockeghem-59-88.mp3'
+    # feature = compute_melgram(test_path)
+    # print(feature.shape)
 
     train, val, test = create_dataset_for_MTAT()
     generate_feature_for_MTAT(train, 'train')

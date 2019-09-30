@@ -56,7 +56,8 @@ def get_arguments():
 
 def main(args):
     # path = '/home/range/Data/MusicFeature/GTZAN/short_logfbank/'
-    path = '/home/range/Data/MusicFeature/MTAT/Spectrogram'
+    # path = '/home/range/Data/MusicFeature/MTAT/Spectrogram'
+    path = '/home/range/Data/MusicFeature/MTAT/Old_spectrogram'
 
     input_shape = get_data_shape()
     output_class = 50
@@ -68,10 +69,10 @@ def main(args):
         print(input_shape)
         exit()
 
-    # model = Basic_GRU(input_shape, output_class)
+    model = Basic_GRU(input_shape, output_class)
     # model = Basic_CNN(input_shape, output_class)
     # model = ResCNN(input_shape, output_class)
-    model = CRNN(input_shape, output_class)
+    # model = CRNN(input_shape, output_class)
     model.summary()
 
     optimizer = optimizers.SGD(lr=0.1, momentum=0.9, nesterov=True, decay=1e-6)
