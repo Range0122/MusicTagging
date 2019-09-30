@@ -349,14 +349,16 @@ def progress(percent, width=50):
 
 if __name__ == '__main__':
     # pass
-    # test_path = '/home/range/Data/MTAT/raw/mp3/2/zephyrus-angelus-10-ave_maria___benedicta_to_ockeghem-59-88.mp3'
+    test_path = '/home/range/Data/MTAT/raw/mp3/2/zephyrus-angelus-10-ave_maria___benedicta_to_ockeghem-59-88.mp3'
+    feat, sr = librosa.load(test_path, sr=22050, duration=2.67795)
+    print(feat.shape, sr)
     # feature = compute_melgram(test_path)
     # print(feature.shape)
 
-    train, val, test = create_dataset_for_MTAT()
-    generate_feature_for_MTAT(train, 'train')
-    generate_feature_for_MTAT(val, 'val')
-    generate_feature_for_MTAT(test, 'test')
+    # train, val, test = create_dataset_for_MTAT()
+    # generate_feature_for_MTAT(train, 'train')
+    # generate_feature_for_MTAT(val, 'val')
+    # generate_feature_for_MTAT(test, 'test')
 
     # generate_short_feature()
     # generate_total_feature()

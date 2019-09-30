@@ -18,36 +18,6 @@ config.gpu_options.per_process_gpu_memory_fraction = 0.99
 sess = tf.Session(config=config)
 
 
-def evaluate(y_pre, y_true, classes):
-    # metrics
-    rocauc = metrics.roc_auc_score(y_true, y_pre)
-    prauc = metrics.average_precision_score(y_true, y_pre, average='macro')
-    y_pred = (y_pre > 0.5).astype(np.float32)
-    acc = metrics.accuracy_score(y_true, y_pred)
-    f1 = metrics.f1_score(y_true, y_pred, average='samples')
-
-    # # accuracy
-    # class_accs = []
-    # cls_rocaucs = []
-    # if classes is not None:
-    #     print(f"\n=> Individual scores of {len(classes)} classes")
-    #     for i, cls in enumerate(classes):
-    #         cls_rocauc = metrics.roc_auc_score(y_true[:, i], y_pre[:, i])
-    #         cls_prauc = metrics.average_precision_score(y_true[:, i], y_pre[:, i])
-    #         cls_acc = metrics.accuracy_score(y_true[:, i], y_pred[:, i])
-    #         cls_f1 = metrics.f1_score(y_true[:, i], y_pred[:, i])
-    #         print(f'[{i:2} {cls:30}] rocauc={cls_rocauc:.4f} prauc = {cls_prauc:.4f} acc={cls_acc:.4f} f1={cls_f1:.4f}')
-    #         class_accs.append(cls_acc)
-    #         cls_rocaucs.append(cls_rocauc)
-    #         print()
-
-    # np.save('rescnn_spec_accs.npy', np.array(class_accs))
-
-    print(f'Test scores: rocauc={rocauc:.6f}\tprauc={prauc:.6f}\tacc={acc:.6f}\tf1={f1:.6f}')
-
-    # return rocauc, prauc, acc, f1
-
-
 def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--target", required=True, choices=['train', 'test'], help='train or test')
@@ -69,10 +39,10 @@ def main(args):
         print(input_shape)
         exit()
 
-    model = Basic_GRU(input_shape, output_class)
+    # model = Basic_GRU(input_shape, output_class)
     # model = Basic_CNN(input_shape, output_class)
+    model = CRNN(input_shape, output_class)
     # model = ResCNN(input_shape, output_class)
-    # model = CRNN(input_shape, output_class)
     model.summary()
 
     optimizer = optimizers.SGD(lr=0.1, momentum=0.9, nesterov=True, decay=1e-6)
@@ -105,7 +75,13 @@ def main(args):
                   'piano', 'fast', 'rock', 'electronic', 'drums', 'strings', 'techno',
                   'slow', 'classical', 'guitar']
 
-        evaluate(y_pre, y_test, labels)
+        rocauc = metrics.roc_auc_score(y_test, y_pre)
+        prauc = metrics.average_precision_score(y_test, y_pre, average='macro')
+        y_pred = (y_pre > 0.5).astype(np.float32)
+        acc = metrics.accuracy_score(y_test, y_pred)
+        f1 = metrics.f1_score(y_test, y_pred, average='samples')
+
+        print(f'Test scores: rocauc={rocauc:.6f}\tprauc={prauc:.6f}\tacc={acc:.6f}\tf1={f1:.6f}')
 
         # # GTZAN RO-AUC PR-AUC
         # score = model.evaluate(x_test, y_test, verbose=0)
