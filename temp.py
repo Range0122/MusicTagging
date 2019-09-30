@@ -52,35 +52,35 @@ def TestRes(input_shape, output_class):
     x = Activation('relu', name='relu6')(x)
 
     shortcut6 = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='shortcut_conv6')(x)
-    shortcut6 = BatchNormalization(name=f'shortcut_norm')(shortcut6)
+    shortcut6 = BatchNormalization(name=f'shortcut_norm6')(shortcut6)
 
     x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv7')(x)
     x = BatchNormalization(name='norm7')(x)
     x = Activation('relu', name='relu7')(x)
 
     shortcut7 = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='shortcut_conv7')(x)
-    shortcut7 = BatchNormalization(name=f'shortcut_norm')(shortcut7)
+    shortcut7 = BatchNormalization(name=f'shortcut_norm7')(shortcut7)
 
     x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv8')(x)
     x = BatchNormalization(name='norm8')(x)
     x = Activation('relu', name='relu8')(x)
 
     shortcut8 = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='shortcut_conv8')(x)
-    shortcut8 = BatchNormalization(name=f'shortcut_norm')(shortcut8)
+    shortcut8 = BatchNormalization(name=f'shortcut_norm8')(shortcut8)
 
     x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv9')(x)
     x = BatchNormalization(name='norm9')(x)
     x = Activation('relu', name='relu9')(x)
 
     shortcut9 = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='shortcut_conv9')(x)
-    shortcut9 = BatchNormalization(name=f'shortcut_norm')(shortcut9)
+    shortcut9 = BatchNormalization(name=f'shortcut_norm9')(shortcut9)
 
     x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv10')(x)
     x = BatchNormalization(name='norm10')(x)
     x = Activation('relu', name='relu10')(x)
 
     shortcut10 = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='shortcut_conv10')(x)
-    shortcut10 = BatchNormalization(name=f'shortcut_norm')(shortcut10)
+    shortcut10 = BatchNormalization(name=f'shortcut_norm10')(shortcut10)
 
     x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv11')(x)
     x = BatchNormalization(name='norm11')(x)
