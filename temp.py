@@ -84,52 +84,52 @@ def TestRes(input_shape, output_class):
 
     x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv11')(x)
     x = BatchNormalization(name='norm11')(x)
-    x = Add(name='add_shortcut')([shortcut1, x])
+    x = Add(name='add_shortcut1')([shortcut1, x])
     x = Activation('relu', name='relu11')(x)
 
     x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv12')(x)
     x = BatchNormalization(name='norm12')(x)
-    x = Add(name='add_shortcut')([shortcut2, x])
+    x = Add(name='add_shortcut2')([shortcut2, x])
     x = Activation('relu', name='relu12')(x)
 
     x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv13')(x)
     x = BatchNormalization(name='norm13')(x)
-    x = Add(name='add_shortcut')([shortcut3, x])
+    x = Add(name='add_shortcut3')([shortcut3, x])
     x = Activation('relu', name='relu13')(x)
 
     x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv14')(x)
     x = BatchNormalization(name='norm14')(x)
-    x = Add(name='add_shortcut')([shortcut4, x])
+    x = Add(name='add_shortcut4')([shortcut4, x])
     x = Activation('relu', name='relu14')(x)
 
     x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv15')(x)
     x = BatchNormalization(name='norm15')(x)
-    x = Add(name='add_shortcut')([shortcut5, x])
+    x = Add(name='add_shortcut5')([shortcut5, x])
     x = Activation('relu', name='relu15')(x)
 
     x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv16')(x)
     x = BatchNormalization(name='norm16')(x)
-    x = Add(name='add_shortcut')([shortcut6, x])
+    x = Add(name='add_shortcut6')([shortcut6, x])
     x = Activation('relu', name='relu16')(x)
 
     x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv17')(x)
     x = BatchNormalization(name='norm17')(x)
-    x = Add(name='add_shortcut')([shortcut7, x])
+    x = Add(name='add_shortcut7')([shortcut7, x])
     x = Activation('relu', name='relu17')(x)
 
     x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv18')(x)
     x = BatchNormalization(name='norm18')(x)
-    x = Add(name='add_shortcut')([shortcut8, x])
+    x = Add(name='add_shortcut8')([shortcut8, x])
     x = Activation('relu', name='relu18')(x)
 
     x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv19')(x)
     x = BatchNormalization(name='norm19')(x)
-    x = Add(name='add_shortcut')([shortcut9, x])
+    x = Add(name='add_shortcut9')([shortcut9, x])
     x = Activation('relu', name='relu19')(x)
 
     x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv20')(x)
     x = BatchNormalization(name='norm20')(x)
-    x = Add(name='add_shortcut')([shortcut10, x])
+    x = Add(name='add_shortcut10')([shortcut10, x])
     x = Activation('relu', name='relu20')(x)
 
     # 减少维数
