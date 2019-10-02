@@ -40,8 +40,9 @@ def main(args):
         exit()
 
     # model = Basic_GRU(input_shape, output_class)
-    # model = Basic_CNN(input_shape, output_class)
-    model = CRNN(input_shape, output_class)
+    model = Basic_CNN(input_shape, output_class)
+    # model = CRNN(input_shape, output_class)
+    # model = TestRes(input_shape, output_class)
     # model = ResCNN(input_shape, output_class)
     model.summary()
 
