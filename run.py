@@ -47,7 +47,8 @@ def main(args):
     model.summary()
 
     optimizer = optimizers.SGD(lr=0.1, momentum=0.9, nesterov=True, decay=1e-6)
-    model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=[categorical_accuracy])
+    # model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=[categorical_accuracy])
+    model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
     if args.target == 'train':
         x_val, y_val = generate_data_from_MTAT('/'.join((path, 'val')))

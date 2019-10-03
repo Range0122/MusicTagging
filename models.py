@@ -76,6 +76,20 @@ def Basic_CNN(input_shape, output_class):
     x = MaxPool2D((4, 4), strides=(4, 4), padding='same', name='pool4')(x)
     x = Dropout(0.3, name='dropout4')(x)
 
+    # Conv block 5
+    x = Conv2D(128, (3, 3), padding='same', name='conv5')(x)
+    x = BatchNormalization(name='bn5')(x)
+    x = ELU()(x)
+    x = MaxPool2D((4, 4), strides=(4, 4), padding='same', name='pool5')(x)
+    x = Dropout(0.3, name='dropout5')(x)
+
+    # Conv block 6
+    x = Conv2D(128, (3, 3), padding='same', name='conv6')(x)
+    x = BatchNormalization(name='bn6')(x)
+    x = ELU()(x)
+    x = MaxPool2D((4, 4), strides=(4, 4), padding='same', name='pool6')(x)
+    x = Dropout(0.3, name='dropout6')(x)
+
     # reshaping
     # x = TimeDistributed(Flatten(), name='timedis1')(x)
     x = Reshape((int(x.shape[1] * x.shape[2] * x.shape[3]), ))(x)
