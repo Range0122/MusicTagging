@@ -23,7 +23,7 @@ def compute_melgram(audio_path):
     if n_sample < n_sample_fit:  # if too short
         src = np.hstack((src, np.zeros((int(DURA * SR) - n_sample,))))
     elif n_sample > n_sample_fit:  # if too long
-        src = src[(n_sample-n_sample_fit)//2:(n_sample+n_sample_fit)//2]
+        src = src[(n_sample - n_sample_fit) // 2:(n_sample + n_sample_fit) // 2]
     logam = librosa.amplitude_to_db
     melgram = librosa.feature.melspectrogram
     ret = logam(melgram(y=src, sr=SR, hop_length=HOP_LEN,
@@ -53,22 +53,23 @@ def compute_total_feature(path):
 def compute_short_feature(path):
     y, sr = librosa.load(path, sr=None, duration=29.18)
 
-    temp = logfbank(y, sr).T[np.newaxis, :]
-    # spectrogram = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=39)[np.newaxis, :]
-    # temp = librosa.amplitude_to_db(spectrogram ** 2, ref=1.0)
+    # temp = logfbank(y, sr).T[np.newaxis, :]
+    # y = y[round(len(y) * 0.05): round(len(y) * 0.95)]
+    spectrogram = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=56)
+    temp = librosa.amplitude_to_db(spectrogram ** 2, ref=1.0)[:, :, np.newaxis]
 
     feature = []
     overlap = 0.5
-    feature_length = 320
-    audio_length = temp.shape[2]
+    feature_length = 100
+    audio_length = temp.shape[1]
     feature_num = int(math.floor(((audio_length / feature_length) - 1) / (1 - overlap) + 1))
 
     for i in range(feature_num):
         start = int(i * (1 - overlap) * feature_length)
         end = int((1 + i * (1 - overlap)) * feature_length)
-        feature.append(temp[:, :, start: end])
+        feature.append(temp[:, start: end, :])
 
-    return feature
+    return feature[1:-1]
 
 
 def generate_data(path):
@@ -141,6 +142,11 @@ def data_generator_for_MTAT(path):
                     feature = np.load(file_path)
                     label = labels[mp3_paths.index(file[:-4])]
 
+                    # if label.sum() == 1:
+                    #     x.append(feature)
+                    #     # y.append(label)
+                    #     y.append(np.where(label == 1)[0])
+
                     x.append(feature)
                     y.append(label)
 
@@ -163,6 +169,23 @@ def generate_data_from_MTAT(path):
             'indian', 'female', 'synth', 'vocal', 'violin', 'beat', 'ambient',
             'piano', 'fast', 'rock', 'electronic', 'drums', 'strings', 'techno',
             'slow', 'classical', 'guitar']
+    # tags = ['classical',
+    #         'techno',
+    #         'electronic',
+    #         'rock',
+    #         'opera',
+    #         'pop',
+    #         'classic',
+    # 'country',
+    # 'metal',
+    # 'jazz',
+    # 'modern',
+    # 'jazzy',
+    # 'baroque',
+    # 'hard rock',
+    # 'electric',
+    # 'folk',
+    # 'punk']
     df = pd.read_csv('/home/range/Data/MTAT/raw/annotations_final.csv', delimiter='\t')
     mp3_paths = list(df['mp3_path'].values)
     labels = df[tags].values
@@ -182,8 +205,10 @@ def generate_data_from_MTAT(path):
             feature = np.load(file_path)
             label = labels[mp3_paths.index(file[:-4])]
 
+            # if label.sum() == 1:
             x.append(feature)
             y.append(label)
+            # y.append(np.where(label == 1)[0])
 
             i += 1
             percent = i / len(files)
@@ -198,7 +223,7 @@ def generate_data_from_MTAT(path):
 
 def get_data_shape():
     # npy_path = '/home/range/Data/MusicFeature/MTAT/Spectrogram/val/glen_bledsoe-up_and_down-09-rumination-175-204.npy'
-    npy_path = '/home/range/Data/MusicFeature/MTAT/Old_spectrogram/val/glen_bledsoe-up_and_down-09-rumination-175-204.npy'
+    npy_path = '/home/range/Data/MusicFeature/MTAT/short_spectrogram/val/glen_bledsoe-up_and_down-09-rumination-175-204.npy'
     feature = np.load(npy_path)
     return feature.shape
 
@@ -207,7 +232,7 @@ def generate_total_feature(root_path='/home/range/Data/GTZAN/data/'):
     """
     generate feature from GTZAN dataset
     """
-    feature_type = 'logfbank'
+    feature_type = 'log_spectrogram'
     labels = ['hiphop', 'disco', 'country', 'classical', 'blues', 'reggae', 'rock', 'jazz', 'metal', 'pop']
 
     data = {'train': [], 'val': [], 'test': []}
@@ -216,14 +241,14 @@ def generate_total_feature(root_path='/home/range/Data/GTZAN/data/'):
         path = root_path + label
         for root, dirs, files in os.walk(path):
             file_list = [root + '/' + file for file in files]
-            data['train'] += file_list[:90]
-            data['val'] += file_list[90:]
-            data['test'] += file_list[90:]
+            data['train'] += file_list[:70]
+            data['val'] += file_list[70:80]
+            data['test'] += file_list[80:]
 
     for item in data.keys():
         i = 0
         for path in data[item]:
-            feature = compute_total_feature(path)
+            feature = compute_melgram(path)
             npy_path = f"/home/range/Data/MusicFeature/GTZAN/{feature_type}/{item}/{path.split('/')[-1][:-3]}"
             np.save(npy_path, feature)
 
@@ -312,14 +337,14 @@ def create_dataset_for_MTAT():
     return train_dataset, val_dataset, test_dataset
 
 
-def generate_feature_for_MTAT(dataset, set_type):
+def generate_total_feature_for_MTAT(dataset, set_type):
     """
     The input parameter dataset is from create_dataset_for_MTAT
     eg. (train_paths, train_labels)
     set_type is for train/val/test
     """
     audio_root = '/home/range/Data/MTAT/raw/mp3/'
-    npy_root = '/home/range/Data/MusicFeature/MTAT/Old_spectrogram'
+    npy_root = '/home/range/Data/MusicFeature/MTAT/log_spectrogram'
     for i in range(len(dataset[0])):
         try:
             path = ''.join((audio_root, dataset[0][i]))
@@ -337,6 +362,58 @@ def generate_feature_for_MTAT(dataset, set_type):
             print(e)
 
 
+def generate_short_feature_for_MTAT(dataset, set_type):
+    """
+    The input parameter dataset is from create_dataset_for_MTAT
+    eg. (train_paths, train_labels)
+    set_type is for train/val/test
+    """
+    audio_root = '/home/range/Data/MTAT/raw/mp3/'
+    npy_root = '/home/range/Data/MusicFeature/MTAT/short_spectrogram'
+    for i in range(len(dataset[0])):
+        try:
+            path = ''.join((audio_root, dataset[0][i]))
+            # feature = compute_total_feature(path)
+            # feature = compute_melgram(path)
+            feature_list = compute_short_feature(path)
+            j = 0
+            for feature in feature_list:
+                file_name = ''.join((dataset[0][i][2:-4], str(j).zfill(2)))
+                npy_path = '/'.join((npy_root, set_type, file_name))
+                np.save(npy_path, feature)
+
+                j += 1
+                i += 1
+                percent = i / len(dataset[0])
+                progress(percent, width=30)
+        except Exception as e:
+            print(e)
+
+
+def load_all_data_GTZAN(path):
+    """
+    path为存放所有的npy文件的目录
+    Used for GTZAN log_spectrogram
+    """
+    tags = ['blues', 'classical', 'disco', 'country', 'hiphop', 'jazz', 'metal', 'pop', 'reggae', 'rock']
+
+    x = []
+    y = []
+
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            file_path = '/'.join((path, file))
+            feature = np.load(file_path)
+            label = tags.index(file.split('.')[0])
+
+            x.append(feature)
+            y.append(label)
+
+    x, y = shuffle_both(x, y)
+
+    return np.array(x), np.array(y)
+
+
 def progress(percent, width=50):
     if percent > 1:  # 如果百分比大于1的话则取1
         percent = 1
@@ -348,21 +425,50 @@ def progress(percent, width=50):
 
 
 if __name__ == '__main__':
-    # pass
-    test_path = '/home/range/Data/MTAT/raw/mp3/2/zephyrus-angelus-10-ave_maria___benedicta_to_ockeghem-59-88.mp3'
-    feat, sr = librosa.load(test_path, sr=22050, duration=2.67795)
-    print(feat.shape, sr)
-    # feature = compute_melgram(test_path)
-    # print(feature.shape)
+    """
+    path为存放所有的npy文件的目录
+    """
+    # load annotation csv
+    tags = ['choral', 'female voice', 'metal', 'country', 'weird', 'no voice',
+            'cello', 'harp', 'beats', 'female vocal', 'male voice', 'dance',
+            'new age', 'voice', 'choir', 'classic', 'man', 'solo', 'sitar', 'soft',
+            'pop', 'no vocal', 'male vocal', 'woman', 'flute', 'quiet', 'loud',
+            'harpsichord', 'no vocals', 'vocals', 'singing', 'male', 'opera',
+            'indian', 'female', 'synth', 'vocal', 'violin', 'beat', 'ambient',
+            'piano', 'fast', 'rock', 'electronic', 'drums', 'strings', 'techno',
+            'slow', 'classical', 'guitar']
 
-    # train, val, test = create_dataset_for_MTAT()
-    # generate_feature_for_MTAT(train, 'train')
-    # generate_feature_for_MTAT(val, 'val')
-    # generate_feature_for_MTAT(test, 'test')
+    df = pd.read_csv('/home/range/Data/MTAT/raw/annotations_final.csv', delimiter='\t')
+    mp3_paths = list(df['mp3_path'].values)
+    labels = df[tags].values
 
-    # generate_short_feature()
-    # generate_total_feature()
+    print("Length of labels:", len(labels))
+    count = 0
 
-    # test_path = '/home/range/Data/GTZAN/data/blues/blues.00001.au'
-    # feature = compute_total_feature(test_path)
-    # feature = compute_short_feature(test_path)
+    for label in labels:
+        if label.sum() == 0:
+            count += 1
+
+    print("Length of zero:", count)
+    print("Length of rest:", len(labels) - count)
+    test = ["no voice", "singer", "duet", "plucking", "hard rock", "world", "bongos", "harpsichord", "female singing",
+            "clasical", "sitar", "chorus", "female opera", "male vocal", "vocals", "clarinet", "heavy", "silence",
+            "beats", "men", "woodwind", "funky", "no strings", "chimes", "foreign", "no piano", "horns", "classical",
+            "female", "no voices", "soft rock", "eerie", "spacey", "jazz", "guitar", "quiet", "no beat", "banjo",
+            "electric", "solo", "violins", "folk", "female voice", "wind", "happy", "ambient", "new age", "synth",
+            "funk", "no singing", "middle eastern", "trumpet", "percussion", "drum", "airy", "voice", "repetitive",
+            "birds", "space", "strings", "bass", "harpsicord", "medieval", "male voice", "girl", "keyboard", "acoustic",
+            "loud", "classic", "string", "drums", "electronic", "not classical", "chanting", "no violin", "not rock",
+            "no guitar", "organ", "no vocal", "talking", "choral", "weird", "opera", "soprano", "fast",
+            "acoustic guitar", "electric guitar", "male singer", "man singing", "classical guitar", "country", "violin",
+            "electro", "reggae", "tribal", "dark", "male opera", "no vocals", "irish", "electronica", "horn",
+            "operatic", "arabic", "lol", "low", "instrumental", "trance", "chant", "strange", "drone", "synthesizer",
+            "heavy metal", "modern", "disco", "bells", "man", "deep", "fast beat", "industrial", "hard", "harp",
+            "no flute", "jungle", "pop", "lute", "female vocal", "oboe", "mellow", "orchestral", "viola", "light",
+            "echo", "piano", "celtic", "male vocals", "orchestra", "eastern", "old", "flutes", "punk", "spanish", "sad",
+            "sax", "slow", "male", "blues", "vocal", "indian", "no singer", "scary", "india", "woman", "woman singing",
+            "rock", "dance", "piano solo", "guitars", "no drums", "jazzy", "singing", "cello", "calm", "female vocals",
+            "voices", "different", "techno", "clapping", "house", "monks", "flute", "not opera", "not english",
+            "oriental", "beat", "upbeat", "soft", "noise", "choir", "female singer", "rap", "metal", "hip hop", "quick",
+            "water", "baroque", "women", "fiddle", "english"]
+    print(len(test))

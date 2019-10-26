@@ -38,7 +38,9 @@ def spectrogram(path):
 
 
 if __name__ == "__main__":
-    path = '/Users/range/Code/Data/af2019-sr-devset-20190312/data/55debb545a804dcdf6fedcce9626572d.wav'
+    # path = '/home/range/Data/MTAT/raw/mp3/7/aba_structure-epic-01-deep_step-465-494.mp3'
+    path = '/home/range/Data/TIMIT/TEST/DR2/FDRD1/SA2.WAV'
     waveform(path)
+    # spectrogram(path)
 
 

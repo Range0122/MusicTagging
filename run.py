@@ -1,5 +1,5 @@
 from models import *
-from Process.feature import generate_data, generate_data_from_MTAT, data_generator_for_MTAT, get_data_shape
+from Process.feature import generate_data, generate_data_from_MTAT, data_generator_for_MTAT, get_data_shape, load_all_data_GTZAN
 import os
 import config as C
 import tensorflow as tf
@@ -25,11 +25,11 @@ def get_arguments():
 
 
 def main(args):
-    # path = '/home/range/Data/MusicFeature/GTZAN/short_logfbank/'
+    # path = '/home/range/Data/MusicFeature/GTZAN/log_spectrogram/'
     # path = '/home/range/Data/MusicFeature/MTAT/Spectrogram'
-    path = '/home/range/Data/MusicFeature/MTAT/Old_spectrogram'
+    path = '/home/range/Data/MusicFeature/MTAT/log_spectrogram'
 
-    input_shape = get_data_shape()
+    input_shape = (96, 1366, 1)
     output_class = 50
     batch_size = C.BATCH_SIZE
 
@@ -47,13 +47,21 @@ def main(args):
     model.summary()
 
     optimizer = optimizers.SGD(lr=0.1, momentum=0.9, nesterov=True, decay=1e-6)
-    # model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=[categorical_accuracy])
+    # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=[categorical_accuracy])
     model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
-    if args.target == 'train':
-        x_val, y_val = generate_data_from_MTAT('/'.join((path, 'val')))
+    # model.compile(loss='sparse_categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
-        model.fit_generator(data_generator_for_MTAT('/'.join((path, 'train'))), epochs=50,
+    if args.target == 'train':
+        # x_train, y_train = load_all_data_GTZAN('/'.join((path, 'train')))
+        # x_val, y_val = load_all_data_GTZAN('/'.join((path, 'val')))
+
+        # x_train, y_train = generate_data_from_MTAT('/'.join((path, 'train')))
+        x_val, y_val = generate_data_from_MTAT('/'.join((path, 'val')))
+        # print("TRAIN LENGTH: ", len(x_train))
+        # print("VAL LENGTH: ", len(x_val))
+
+        model.fit_generator(data_generator_for_MTAT('/'.join((path, 'train'))), epochs=20,
                             steps_per_epoch=18706 // batch_size,
                             validation_data=(x_val, y_val),
                             validation_steps=len(x_val) // batch_size, verbose=1,
@@ -62,20 +70,24 @@ def main(args):
                                        ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10,
                                                          mode='min'),
                                        EarlyStopping(monitor='val_loss', patience=20)])
+
+        # model.fit(x_train, y_train, epochs=30, validation_data=(x_val, y_val),
+        #           callbacks=[ModelCheckpoint(f'check_point/{model.name}_best.h5', monitor='val_loss',
+        #                                      save_best_only=True, mode='min'),
+        #                      ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, mode='min'),
+        #                      EarlyStopping(monitor='val_loss', patience=20)])
     else:
-        model.load_weights(f'check_point/{model.name}_best.h5')
+        # model.load_weights(f'check_point/{model.name}_best.h5')
+        model.load_weights(f'check_point/961366spectrogram/{model.name}_best.h5')
 
         x_test, y_test = generate_data_from_MTAT('/'.join((path, 'test')))
-        y_pre = model.predict(x_test)
+        # x_test, y_test = load_all_data_GTZAN('/'.join((path, 'test')))
 
-        labels = ['choral', 'female voice', 'metal', 'country', 'weird', 'no voice',
-                  'cello', 'harp', 'beats', 'female vocal', 'male voice', 'dance',
-                  'new age', 'voice', 'choir', 'classic', 'man', 'solo', 'sitar', 'soft',
-                  'pop', 'no vocal', 'male vocal', 'woman', 'flute', 'quiet', 'loud',
-                  'harpsichord', 'no vocals', 'vocals', 'singing', 'male', 'opera',
-                  'indian', 'female', 'synth', 'vocal', 'violin', 'beat', 'ambient',
-                  'piano', 'fast', 'rock', 'electronic', 'drums', 'strings', 'techno',
-                  'slow', 'classical', 'guitar']
+        # print("TEST LENGTH: ", len(x_test))
+        # acc = model.evaluate(x_test, y_test, verbose=0)[1]
+        # print(acc)
+
+        y_pre = model.predict(x_test)
 
         rocauc = metrics.roc_auc_score(y_test, y_pre)
         prauc = metrics.average_precision_score(y_test, y_pre, average='macro')

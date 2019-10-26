@@ -94,7 +94,8 @@ def Basic_CNN(input_shape, output_class):
     # x = TimeDistributed(Flatten(), name='timedis1')(x)
     x = Reshape((int(x.shape[1] * x.shape[2] * x.shape[3]), ))(x)
 
-    x = Dense(output_class, activation='sigmoid', name='output')(x)
+    # x = Dense(output_class, activation='sigmoid', name='output')(x)
+    x = Dense(output_class, activation='softmax', name='output')(x)
 
     return Model(inputs=[x_in], outputs=[x], name='Basic_CNN')
 
@@ -144,7 +145,8 @@ def CRNN(input_shape, output_class):
     x = GRU(32, return_sequences=False, name='gru2')(x)
     x = Dropout(0.3)(x)
 
-    x = Dense(output_class, activation='sigmoid', name='output')(x)
+    # x = Dense(output_class, activation='sigmoid', name='output')(x)
+    x = Dense(output_class, activation='softmax', name='output')(x)
 
     return Model(inputs=[x_in], outputs=[x], name='CRNN')
 
@@ -176,30 +178,43 @@ def res_conv_block(x, filters, strides, name):
 
 
 def ResCNN(input_shape, num_class):
+    K.set_image_dim_ordering('th')
+
     x_in = Input(input_shape, name='input')
 
     # x = ZeroPadding2D((2, 37), name='zero-padding')(x_in)
+    big = 512
+    mid = 256
+    small = 128
+    _min = 64
 
-    x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv1')(x_in)
+    # parameters for test
+    # big = 128
+    # mid = 64
+    # small = 32
+    # _min = 16
+
+    x = Conv2D(mid, (3, 3), strides=(1, 1), padding='same', name='conv1')(x_in)
     x = BatchNormalization(name='norm1')(x)
     x = Activation('relu', name='relu1')(x)
 
-    x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv2')(x)
+    x = Conv2D(mid, (3, 3), strides=(1, 1), padding='same', name='conv2')(x)
     x = BatchNormalization(name='norm2')(x)
     x = Activation('relu', name='relu2')(x)
 
     x = MaxPool2D((3, 3), strides=(2, 2), padding='same', name='pool2')(x)
 
-    x = res_conv_block(x, [64, 64, 256], strides=(2, 2), name='block1')
-    x = res_conv_block(x, [64, 64, 256], strides=(2, 2), name='block2')
-    x = res_conv_block(x, [64, 64, 256], strides=(2, 2), name='block3')
+    x = res_conv_block(x, [_min, _min, mid], strides=(2, 2), name='block1')
+    x = res_conv_block(x, [_min, _min, mid], strides=(2, 2), name='block2')
+    x = res_conv_block(x, [_min, _min, mid], strides=(2, 2), name='block3')
 
-    x = res_conv_block(x, [128, 128, 512], strides=(2, 2), name='block4')
-    x = res_conv_block(x, [128, 128, 512], strides=(2, 2), name='block5')
-    x = res_conv_block(x, [128, 128, 512], strides=(2, 2), name='block6')
+    x = res_conv_block(x, [small, small, big], strides=(2, 2), name='block4')
+    x = res_conv_block(x, [small, small, big], strides=(2, 2), name='block5')
+    x = res_conv_block(x, [small, small, big], strides=(2, 2), name='block6')
 
     # 减少维数
-    x = Lambda(lambda y: K.mean(y, axis=[1, 2]), name='avgpool')(x)
+    # x = Lambda(lambda y: K.mean(y, axis=[1, 2]), name='avgpool')(x)
+    x = Reshape((int(x.shape[1] * x.shape[2] * x.shape[3]), ))(x)
 
     # the final two fcs
     x = Dense(x.shape[-1].value, kernel_initializer='glorot_uniform', name='final_fc')(x)
@@ -249,34 +264,6 @@ def TestRes(input_shape, output_class):
     x = BatchNormalization(name='norm7')(x)
     x = Activation('relu', name='relu7')(x)
 
-    x = Conv2D(128, (3, 3), strides=(1, 1), padding='same', name='conv11')(x)
-    x = BatchNormalization(name='norm11')(x)
-    x = Activation('relu', name='relu11')(x)
-
-    x = Conv2D(128, (3, 3), strides=(1, 1), padding='same', name='conv12')(x)
-    x = BatchNormalization(name='norm12')(x)
-    x = Activation('relu', name='relu12')(x)
-
-    x = Conv2D(128, (3, 3), strides=(1, 1), padding='same', name='conv13')(x)
-    x = BatchNormalization(name='norm13')(x)
-    x = Activation('relu', name='relu13')(x)
-
-    x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv14')(x)
-    x = BatchNormalization(name='norm14')(x)
-    x = Activation('relu', name='relu14')(x)
-
-    x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv15')(x)
-    x = BatchNormalization(name='norm15')(x)
-    x = Activation('relu', name='relu15')(x)
-
-    x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv16')(x)
-    x = BatchNormalization(name='norm16')(x)
-    x = Activation('relu', name='relu16')(x)
-
-    x = Conv2D(256, (3, 3), strides=(1, 1), padding='same', name='conv17')(x)
-    x = BatchNormalization(name='norm17')(x)
-    x = Activation('relu', name='relu17')(x)
-
     # 减少维数
     x = Lambda(lambda y: K.mean(y, axis=[1, 2]), name='avgpool')(x)
 
@@ -286,3 +273,20 @@ def TestRes(input_shape, output_class):
     # x = Activation('softmax', name='pred')(x)
 
     return Model(inputs=[x_in], outputs=[x], name='TestRes')
+
+
+def test_LSTM(input_shape, output_class):
+    K.set_image_dim_ordering('th')
+
+    x_in = Input(input_shape, name='input')
+
+    x = LSTM(64, return_sequences=True, name='LSTM1')(x_in)
+    x = LSTM(64, return_sequences=True, name='LSTM2')(x)
+    x = LSTM(64, return_sequences=True, name='LSTM3')(x)
+    x = LSTM(32, return_sequences=True, name='LSTM4')(x)
+    x = LSTM(32, return_sequences=False, name='LSTM5')(x)
+
+    x = Dense(output_class, activation='sigmoid', name='output')(x)
+
+    return Model(inputs=[x_in], ouputs=[x], name='TestLSTM')
+
